@@ -1,0 +1,63 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate JSON files
+        run: |
+          python - <<'EOF'
+          import json, pathlib, sys
+          skip = {".git", "vendor", "games", "work", "node_modules"}
+          bad = 0
+          for p in sorted(pathlib.Path(".").rglob("*.json")):
+              if skip & set(p.parts):
+                  continue
+              try:
+                  json.loads(p.read_text(encoding="utf-8"))
+                  print("ok  ", p)
+              except ValueError as exc:
+                  print("FAIL", p, exc)
+                  bad += 1
+          sys.exit(bad)
+          EOF
+
+      - name: Compile Python (scripts and own skills)
+        run: |
+          python -m py_compile scripts/*.py
+          find .claude/skills/studio-doctor .claude/skills/quota-guard .claude/skills/own-audio \
+            -name '*.py' -print0 | xargs -0 -r python -m py_compile
+
+      - name: shellcheck
+        run: shellcheck scripts/setup.sh scripts/update-skills.sh
+
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $bad = 0
+          Get-ChildItem -Recurse -Filter *.ps1 -Path scripts | ForEach-Object {
+            $tokens = $null; $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+            foreach ($e in $errors) {
+              Write-Output "$($_.Name):$($e.Extent.StartLineNumber): $($e.Message)"
+              $bad++
+            }
+          }
+          if ($bad -gt 0) { exit 1 }
+          Write-Output "ok: all .ps1 files parse"
+
+      - name: Same checks through the local runner
+        run: python scripts/validate.py --strict
