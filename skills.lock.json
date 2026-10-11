@@ -1,0 +1,113 @@
+{
+  "$comment": "Third-party skills pinned by commit. scripts/setup.* install from here; scripts/update-skills.* move the pins. Never copy third-party content into this repository.",
+  "version": 1,
+  "sources": [
+    {
+      "name": "syphodev-roblox-ai-skills",
+      "repo": "SyphoDev-yt/roblox-ai-skills",
+      "url": "https://github.com/SyphoDev-yt/roblox-ai-skills.git",
+      "branch": "main",
+      "commit": "f530452ea9390ba285ab506e070062c2f83fd83d",
+      "install": {
+        "method": "vendor-installer",
+        "scope": "user",
+        "installer": {
+          "windows": "install.ps1",
+          "posix": "install.sh"
+        },
+        "paths": ["skills/*", "agents/*.md"],
+        "destination": ["~/.claude/skills", "~/.claude/agents"],
+        "patchAgents": {
+          "disallowedTools": ["mcp__Roblox_Studio", "mcp__robloxstudio-runtime"]
+        }
+      },
+      "license": {
+        "spdx": "LicenseRef-SyphoDev-Free",
+        "file": "LICENSE.txt",
+        "summary": "Free to use, including commercial Roblox games. Selling the skills (or modified copies) is prohibited. Free redistribution must link to the SyphoDev YouTube channel.",
+        "attribution": "https://www.youtube.com/@SyphoDev"
+      }
+    },
+    {
+      "name": "el4cteo-roblox-skills",
+      "repo": "EL4CTEO/roblox-skills",
+      "url": "https://github.com/EL4CTEO/roblox-skills.git",
+      "branch": "main",
+      "commit": "11571e0622bb96c0d469e5c688bed7017c6b5cda",
+      "ref": "v1.1.0",
+      "install": {
+        "method": "plugin",
+        "scope": "project",
+        "marketplace": "roblox-skills",
+        "marketplaceSource": "EL4CTEO/roblox-skills#v1.1.0",
+        "plugin": "roblox-skills@roblox-skills",
+        "paths": ["skills/*"],
+        "destination": "~/.claude/plugins (managed by Claude Code)"
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      }
+    },
+    {
+      "name": "xtrair-figma-to-roblox-ui",
+      "repo": "xtrair/figma-to-roblox-ui",
+      "url": "https://github.com/xtrair/figma-to-roblox-ui.git",
+      "branch": "main",
+      "commit": "6d5f376a9114ad1efdb1d4488f7ffd4a0690278d",
+      "install": {
+        "method": "copy",
+        "scope": "project",
+        "copy": [
+          { "from": "SKILL.md", "to": ".claude/skills/figma-to-roblox-ui/SKILL.md" },
+          { "from": "LICENSE", "to": ".claude/skills/figma-to-roblox-ui/LICENSE" }
+        ]
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      }
+    },
+    {
+      "name": "taboo-roblox-brain",
+      "repo": "TabooHarmony/roblox-brain",
+      "url": "https://github.com/TabooHarmony/roblox-brain.git",
+      "branch": "main",
+      "commit": "38826be57ee37bcf023e9c2b85681bea3909281c",
+      "install": {
+        "method": "copy",
+        "scope": "project",
+        "copy": [
+          { "from": "skills/design/roblox-game-design", "to": ".claude/skills/roblox-game-design" },
+          { "from": "skills/design/roblox-player-psychology", "to": ".claude/skills/roblox-player-psychology" },
+          { "from": "LICENSE", "to": ".claude/skills/roblox-game-design/LICENSE" },
+          { "from": "LICENSE", "to": ".claude/skills/roblox-player-psychology/LICENSE" }
+        ]
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      }
+    },
+    {
+      "name": "figma-official",
+      "repo": "anthropics/claude-plugins-official",
+      "url": "https://github.com/anthropics/claude-plugins-official.git",
+      "commit": null,
+      "install": {
+        "method": "plugin",
+        "scope": "project",
+        "marketplace": "claude-plugins-official",
+        "marketplaceSource": "anthropics/claude-plugins-official",
+        "plugin": "figma@claude-plugins-official",
+        "paths": [],
+        "destination": "~/.claude/plugins (managed by Claude Code)"
+      },
+      "license": {
+        "spdx": "LicenseRef-Official",
+        "file": null,
+        "summary": "Official Figma plugin distributed through Anthropic's official marketplace; the marketplace pins its own SHA and auto-updates."
+      }
+    }
+  ]
+}

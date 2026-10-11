@@ -1,0 +1,39 @@
+# Games: each one is its own Rojo project (and usually its own git repo)
+games/*
+!games/README.md
+!games/.gitkeep
+
+# Third-party sources cloned by scripts/setup.*
+vendor/
+
+# Scratch space: quota ledger, smoke tests, audio cache
+work/
+
+# Personal, machine-specific files
+LOCAL.md
+.claude/settings.local.json
+.env*
+
+# Roblox build output and generated files
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+Packages/
+ServerPackages/
+DevPackages/
+sourcemap.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Third-party skills copied by scripts/setup.* (see skills.lock.json)
+.claude/skills/figma-to-roblox-ui/
+.claude/skills/roblox-game-design/
+.claude/skills/roblox-player-psychology/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
