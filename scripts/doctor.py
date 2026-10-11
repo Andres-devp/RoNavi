@@ -68,6 +68,12 @@ def find(name: str) -> str | None:
         for cand in (d / name, d / f"{name}.exe", d / f"{name}.cmd"):
             if cand.exists():
                 return str(cand)
+    if SYSTEM == "Windows":
+        # winget puts portable packages here and only fixes PATH for NEW shells.
+        local = os.environ.get("LOCALAPPDATA", str(HOME / "AppData" / "Local"))
+        hits = sorted(glob.glob(os.path.join(local, "Microsoft", "WinGet", "Packages", "*", f"{name}.exe")))
+        if hits:
+            return hits[-1]
     return None
 
 

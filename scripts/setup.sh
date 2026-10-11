@@ -47,6 +47,16 @@ fi
 "$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' \
   || die "Se necesita Python 3.11 o superior."
 echo "  ok git, $py, claude"
+# A package-manager install of Rokit has no tool links (~/.rokit/bin) until
+# "rokit self-install", which also adds that folder to the shell PATH.
+if command -v rokit >/dev/null 2>&1; then
+  if [ ! -d "$HOME/.rokit/bin" ]; then
+    echo "  rokit self-install (crea ~/.rokit/bin y lo añade al PATH)"
+    rokit self-install
+  fi
+else
+  echo "  aviso: falta Rokit (https://github.com/rojo-rbx/rokit); lo necesitarás dentro de cada juego"
+fi
 
 step 2 "Fuentes fijadas en vendor/"
 "$py" "$sync" vendor

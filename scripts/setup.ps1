@@ -64,6 +64,15 @@ try {
         Stop-Setup 'Se necesita Python 3.11 o superior (winget install Python.Python.3.12).'
     }
     Write-Host '  ok git, python, claude'
+    # winget installs Rokit itself, but its tool links (~/.rokit/bin: rojo, wally...)
+    # only exist after "rokit self-install", which also adds that folder to PATH.
+    $rokit = Get-Command rokit -ErrorAction SilentlyContinue
+    if ($rokit -and -not (Test-Path (Join-Path $HOME '.rokit\bin'))) {
+        Write-Host '  rokit self-install (crea ~/.rokit/bin y lo añade al PATH)'
+        Invoke-Checked 'rokit self-install' { rokit self-install }
+    } elseif (-not $rokit) {
+        Write-Host '  aviso: falta Rokit (winget install Rojo.Rokit); lo necesitarás dentro de cada juego' -ForegroundColor Yellow
+    }
 
     Write-Step 2 'Fuentes fijadas en vendor/'
     Invoke-Checked 'skills_sync vendor' { python $Sync vendor }

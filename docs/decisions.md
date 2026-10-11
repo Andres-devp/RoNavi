@@ -100,6 +100,7 @@ encargo original y la documentación oficial están al final, con fecha de verif
 **Por qué:**
 - Rokit es compatible con Aftman y Foreman, está en winget (`Rojo.Rokit`) y está mantenido.
 - No se modifica el generador de SyphoDev.
+- La instalación de winget no crea `~/.rokit/bin`, la carpeta de los enlaces a rojo, wally y compañía. Hace falta `rokit self-install`, que también la añade al PATH; el setup lo ejecuta si falta (comprobado el 2026-10-11 con Rokit 1.2.0).
 
 **luau-lsp:** el `aftman.toml` que genera SyphoDev no lo incluye. Se cubre con la extensión de VS Code `JohnnyMorganz.luau-lsp`, que trae su propio binario. Para la CLI en un juego: `rokit add JohnnyMorganz/luau-lsp`.
 

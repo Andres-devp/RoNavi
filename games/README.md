@@ -36,6 +36,7 @@ Dentro de la carpeta del juego:
 
 ```bash
 rokit install      # lee el aftman.toml del juego (las skills dicen "aftman install"; es lo mismo)
+                   # la primera vez pregunta si confías en cada herramienta: responde que sí
 wally install      # Knit, Promise, Signal, Trove -> Packages/
 python ~/.claude/skills/roblox-code/scripts/check.py   # 4 revisiones: deben salir en verde
 rojo serve         # luego, en Studio: plugin de Rojo -> Connect (una sola conexión)

@@ -31,7 +31,7 @@ en días. Actualiza Studio antes de una sesión larga y revisa el interruptor.
 | El plugin dice conectado pero no llega ningún cambio | **El aviso de conexión no se aceptó** | En Studio, abre el panel de Rojo y pulsa Connect / Accept. Una conexión TCP no es una sesión sincronizada. |
 | La marca de build no aparece en Output al dar Play | Studio corre código viejo | Rojo no sincroniza: revisa las tres filas anteriores |
 | Cambios hechos en Studio que "vuelven atrás" | Script Sync de Studio encendido, o se editó en Studio | Apaga Script Sync; edita siempre en disco |
-| `rojo` no se encuentra dentro del juego | Falta `rokit install` en esa carpeta | `rokit install` (lee el `aftman.toml` del juego) |
+| `rojo` no se encuentra dentro del juego | Falta `rokit install` en esa carpeta, o falta `~/.rokit/bin` | `rokit install` (lee el `aftman.toml` del juego). Si Rokit vino de winget, ejecuta antes `rokit self-install` (el setup lo hace) y abre una terminal nueva. |
 
 ## Windows: `uvx` o `npx` dan `ENOENT`
 

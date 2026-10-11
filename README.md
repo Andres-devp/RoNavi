@@ -72,7 +72,7 @@ En Windows, cada comando `winget` se ejecuta en tu terminal y acepta las licenci
 | Git | Obligatorio | Control de versiones | `winget install Git.Git` |
 | VS Code | Obligatorio | Editor; extensiones de Rojo, luau-lsp, Selene y StyLua | `winget install Microsoft.VisualStudioCode` |
 | Python 3.11+ | Obligatorio | Scripts de las skills, setup, doctor | `winget install Python.Python.3.12` |
-| Rokit | Obligatorio | Instala la toolchain de cada juego (rojo, wally, lune, selene, stylua) | `winget install Rojo.Rokit` |
+| Rokit | Obligatorio | Instala la toolchain de cada juego (rojo, wally, lune, selene, stylua) | `winget install Rojo.Rokit` (el setup ejecuta después `rokit self-install`) |
 | Claude Code | Obligatorio | El agente | https://code.claude.com/docs/en/setup |
 | Roblox Studio | Obligatorio | El motor; trae el MCP oficial | https://create.roblox.com/docs/studio/setup |
 | Blender 4.x | Obligatorio | Modelos y animación sin ventana | `winget install BlenderFoundation.Blender.LTS.4.5` |
