@@ -28,6 +28,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Repo = Split-Path -Parent $PSScriptRoot
+
+# winget and rokit change PATH only for NEW terminals; reload it so setup works
+# right after install-prereqs.ps1 in the same window.
+$env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+            [Environment]::GetEnvironmentVariable('Path', 'User')
 $Sync = Join-Path $PSScriptRoot 'skills_sync.py'
 
 function Write-Step([int]$n, [string]$text) {

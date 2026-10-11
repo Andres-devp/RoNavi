@@ -9,6 +9,85 @@ Funciona en Windows (prioridad), macOS y Linux (en Linux, sin Studio).
 
 ---
 
+## Inicio rápido: PC nuevo con Windows
+
+Unos 20–40 minutos, casi todo descargas. Las secciones 2 a 4 explican cada paso con detalle.
+
+**1. Git y el repositorio** (PowerShell):
+
+```powershell
+winget install --id Git.Git -e
+```
+
+Cierra y abre la terminal, y luego:
+
+```powershell
+cd $HOME\Desktop
+git clone https://github.com/<tu-usuario>/roblox-ai-studio.git
+cd roblox-ai-studio
+```
+
+**2. Todos los programas de una vez.** Acepta las licencias que pida winget:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-prereqs.ps1 -Optional
+```
+
+Instala Git, VS Code, Python 3.12, Rokit, uv, Blender 4.5 LTS, Roblox Studio y Claude Code.
+Con `-Optional` añade Node, ffmpeg, PowerShell 7, shellcheck y GitHub CLI, y además las
+extensiones de VS Code.
+
+**3. Inicia sesión en Claude Code una vez.** Ejecuta `claude`, completa el login y sal con `/exit`.
+
+**4. Setup del estudio.** Instala las skills, los plugins y las dependencias de Python, y pregunta por `ROBLOX_GAMES_HOME`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+```
+
+Termina con la tabla de `doctor.py`: no debe quedar ninguna fila ❌.
+
+**5. Claves**, con `setx` en tu terminal, **nunca en el chat** (sección 3):
+
+```powershell
+setx ROBLOX_API_KEY "..."
+setx ROBLOX_USER_ID "..."
+setx CF_ACCOUNT_ID "..."
+setx CF_API_TOKEN "..."
+setx KAGGLE_API_TOKEN "..."
+```
+
+**6. Roblox Studio:**
+- Inicia sesión.
+- Assistant → **…** → **Manage MCP Servers** → **Enable Studio as MCP server**.
+- Deja **Script Sync** apagado.
+
+**7. Abre una terminal nueva** (para que lea las variables) y arranca Claude:
+
+```powershell
+cd $HOME\Desktop\roblox-ai-studio
+claude
+```
+
+Dentro de Claude:
+- Acepta la confianza de la carpeta.
+- `/mcp` → **figma** → autenticar.
+- `/roblox-skills-setup`: escribe los `LOCAL.md` de las skills de SyphoDev.
+- Comprueba Studio pidiendo: *"llama a list_roblox_studios y get_studio_state"*.
+
+**8. Primer juego:**
+
+```text
+complete the research and plan stage for an obby game
+```
+
+Al cerrar la sección, escribe "approved". Cuando crees el primer juego, ejecuta dentro de
+su carpeta `rokit install`, `wally install` y `rojo plugin install` (ver [games/README.md](games/README.md)).
+
+Si algo falla: `python scripts/doctor.py`, o dile a Claude *"algo falla con Studio"*.
+
+---
+
 ## 1. Qué es y cómo funciona
 
 Claude Code es el agente. Lee `CLAUDE.md`, elige la skill adecuada para cada tarea y habla
@@ -65,7 +144,8 @@ Más detalle en [docs/pipeline.md](docs/pipeline.md).
 
 ## 2. Programas
 
-En Windows, cada comando `winget` se ejecuta en tu terminal y acepta las licencias del paquete.
+En Windows, `scripts\install-prereqs.ps1` instala todo esto de una vez (con `-Optional`, también los
+opcionales). Ejecútalo tú en tu terminal: winget te pide aceptar la licencia de cada paquete.
 
 | Programa | Tipo | Para qué sirve | Windows (winget) / enlace |
 |---|---|---|---|
@@ -73,13 +153,14 @@ En Windows, cada comando `winget` se ejecuta en tu terminal y acepta las licenci
 | VS Code | Obligatorio | Editor; extensiones de Rojo, luau-lsp, Selene y StyLua | `winget install Microsoft.VisualStudioCode` |
 | Python 3.11+ | Obligatorio | Scripts de las skills, setup, doctor | `winget install Python.Python.3.12` |
 | Rokit | Obligatorio | Instala la toolchain de cada juego (rojo, wally, lune, selene, stylua) | `winget install Rojo.Rokit` (el setup ejecuta después `rokit self-install`) |
-| Claude Code | Obligatorio | El agente | https://code.claude.com/docs/en/setup |
-| Roblox Studio | Obligatorio | El motor; trae el MCP oficial | https://create.roblox.com/docs/studio/setup |
+| Claude Code | Obligatorio | El agente | `irm https://claude.ai/install.ps1 \| iex` (se actualiza solo) o `winget install Anthropic.ClaudeCode` |
+| Roblox Studio | Obligatorio | El motor; trae el MCP oficial | `winget install Roblox.RobloxStudio` o https://create.roblox.com/docs/studio/setup |
 | Blender 4.x | Obligatorio | Modelos y animación sin ventana | `winget install BlenderFoundation.Blender.LTS.4.5` |
 | uv | Obligatorio | Ejecuta `uvx` (MCP de Blender) | `winget install astral-sh.uv` |
 | Node LTS | Opcional | `npx` para `robloxstudio-runtime`; ruta "hard-surface" de 3D | `winget install OpenJS.NodeJS.LTS` |
 | ffmpeg | Opcional | Convertir y normalizar audio (`own-audio`), vistas previas | `winget install Gyan.FFmpeg` |
 | Moon Animator 2 | Opcional | Retoques de animación dentro de Studio | Plugin de la Creator Store |
+| GitHub CLI | Opcional | Crear un repositorio para cada juego (`gh repo create`) | `winget install GitHub.cli` |
 | Gemini CLI / Antigravity CLI | Opcional | Respaldo si se agota Claude (cupo no verificado: ver `docs/quotas.md`) | https://geminicli.com |
 
 En macOS usa los instaladores de cada enlace (o `brew install git python uv ffmpeg node`).
@@ -140,7 +221,9 @@ export KAGGLE_API_TOKEN="tu-token"
 ## 4. Configuración inicial paso a paso
 
 1. En GitHub: **Use this template** → crea tu repositorio → clónalo.
-2. Instala los programas obligatorios (sección 2) y abre una terminal nueva.
+2. Instala los programas obligatorios (sección 2).
+   - En Windows: `powershell -ExecutionPolicy Bypass -File scripts\install-prereqs.ps1`.
+   - Inicia sesión en Claude Code una vez: `claude` y luego `/exit`.
 3. Ejecuta el setup. Se puede repetir sin miedo.
 
    ```powershell
