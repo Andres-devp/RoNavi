@@ -23,9 +23,11 @@ Cierra y abre la terminal, y luego:
 
 ```powershell
 cd $HOME\Desktop
-git clone https://github.com/<tu-usuario>/roblox-ai-studio.git
+git clone https://github.com/Andres-devp/roblox-ai-studio.git
 cd roblox-ai-studio
 ```
+
+(Si creaste tu copia con "Use this template", usa la URL de tu repositorio).
 
 **2. Todos los programas de una vez.** Acepta las licencias que pida winget:
 
