@@ -84,7 +84,7 @@ try {
 
     Write-Step 6 'Dependencias de Python'
     Invoke-Checked 'pip install' {
-        python -m pip install --user --disable-pip-version-check --quiet -r (Join-Path $Repo 'requirements.txt')
+        python -m pip install --user --disable-pip-version-check --no-warn-script-location --quiet -r (Join-Path $Repo 'requirements.txt')
     }
     Write-Host '  ok requirements.txt'
 

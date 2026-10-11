@@ -1,20 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "enabledPlugins": {
-    "roblox-skills@roblox-skills": true,
-    "figma@claude-plugins-official": true
-  },
-  "extraKnownMarketplaces": {
-    "roblox-skills": {
-      "source": {
-        "source": "github",
-        "repo": "EL4CTEO/roblox-skills",
-        "ref": "v1.1.0"
-      },
-      "autoUpdate": false
-    }
-  },
-  "enabledMcpjsonServers": ["Roblox_Studio"],
   "permissions": {
     "allow": [
       "mcp__Roblox_Studio__search_game_tree",
@@ -47,6 +32,11 @@
       "PowerShell(git diff *)",
       "PowerShell(python scripts/doctor.py *)"
     ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/kaggle.json)",
+      "Read(~/.kaggle/**)"
+    ],
     "ask": [
       "mcp__Roblox_Studio__execute_luau",
       "mcp__Roblox_Studio__multi_edit",
@@ -55,11 +45,23 @@
       "mcp__Roblox_Studio__generate_*",
       "mcp__Roblox_Studio__upload_image",
       "mcp__Roblox_Studio__store_image"
-    ],
-    "deny": [
-      "Read(.env*)",
-      "Read(**/kaggle.json)",
-      "Read(~/.kaggle/**)"
     ]
+  },
+  "enabledMcpjsonServers": [
+    "Roblox_Studio"
+  ],
+  "enabledPlugins": {
+    "roblox-skills@roblox-skills": true,
+    "figma@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "roblox-skills": {
+      "source": {
+        "source": "github",
+        "repo": "EL4CTEO/roblox-skills",
+        "ref": "v1.1.0"
+      },
+      "autoUpdate": false
+    }
   }
 }

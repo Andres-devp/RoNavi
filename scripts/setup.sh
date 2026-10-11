@@ -76,7 +76,7 @@ else
 fi
 
 step 6 "Dependencias de Python"
-pip_flags=(--user --disable-pip-version-check --quiet)
+pip_flags=(--user --disable-pip-version-check --no-warn-script-location --quiet)
 if "$py" -m pip install "${pip_flags[@]}" -r "$repo/requirements.txt"; then
   echo "  ok requirements.txt"
 else
