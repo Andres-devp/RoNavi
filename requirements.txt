@@ -1,0 +1,13 @@
+# Python packages that SyphoDev's skill scripts import on THIS machine
+# (checked against their imports at commit f530452).
+# Not listed on purpose:
+#   bpy, bmesh, mathutils        -> run inside Blender's own Python
+#   torch, diffusers, spconv ... -> run inside the Kaggle GPU kernel
+pillow>=10.0          # roblox-ui, roblox-map, roblox-3d-model, roblox-vfx
+numpy>=1.26           # roblox-map, roblox-ui, roblox-3d-model, roblox-vfx
+scipy>=1.11           # roblox-map (terrain checks), roblox-ui (glyphs, icon cutout)
+opencv-python>=4.9    # roblox-ui icon_cutout.py
+requests>=2.31        # roblox-3d-model upload_asset.py, own-audio upload
+kaggle>=1.7           # roblox-3d-model kaggle_run.py, create-roblox-game preflight
+gradio_client>=1.3    # roblox-3d-model image_to_3d.py / concept_image.py (HF Spaces)
+huggingface_hub>=0.24 # Hugging Face fallback (HF_TOKEN)

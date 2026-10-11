@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "Roblox_Studio": {
+      "command": "cmd.exe",
+      "args": ["/c", "%LOCALAPPDATA%\\Roblox\\mcp.bat"]
+    },
+    "blender-ahujasid": {
+      "command": "cmd",
+      "args": ["/c", "uvx", "--python", "3.11", "mcp-for-blender"],
+      "env": {
+        "UV_PYTHON_PREFERENCE": "only-managed"
+      }
+    },
+    "robloxstudio-runtime": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@chrrxs/robloxstudio-mcp@3.2.0", "--auto-install-plugin"]
+    }
+  }
+}
