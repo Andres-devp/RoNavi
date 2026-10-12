@@ -1,19 +1,32 @@
-# roblox-ai-studio
+# RoNavi Studio
 
-Plantilla para crear juegos de Roblox con **Claude Code**, el **MCP oficial de Roblox Studio**,
-**Rojo**, **Blender**, **Figma** y un conjunto de skills ya elegido y fijado por commit.
-Funciona en Windows (prioridad), macOS y Linux (en Linux, sin Studio).
+Estudio para crear juegos de Roblox con **Claude Code**, desde una sola interfaz de terminal.
+Combina el **MCP oficial de Roblox Studio**, **Rojo**, **Blender**, **Figma** y un conjunto de skills
+elegido y fijado por commit. Funciona en Windows (prioridad), macOS y Linux (en Linux, sin Studio).
 
-> Usa este repositorio con **"Use this template"** en GitHub. Cada juego que crees vive en
-> `games/<NombreJuego>/` con su propio git.
+```text
+   ▄▀▄          ▄▀▄      RoNavi Studio
+   █ ▀▄▄▄▄▄▄▄▄▀ █        ─────────────
+   █   ▀▄   ▄▀   █       Instalación · Juegos · Skills
+    ▀▄  ●   ●  ▄▀        Herramientas · Integraciones
+      ▀▄▄ ▼ ▄▄▀
+     ▓▓▓▓▓▓▓▓▓▓▓         Navi, el zorro de la bufanda roja
+          ▓▓
+```
+
+**RoNavi Studio** es el punto de entrada único: la primera vez instala y configura todo con un
+asistente; después crea juegos, los continúa con Claude Code en la carpeta correcta y gestiona
+skills, herramientas, servidores MCP y claves. Cada juego vive en `games/<NombreJuego>/` como
+proyecto independiente, con su propio git y un guardián que impide que Claude toque la plantilla u
+otros juegos. Guía completa: [docs/ronavi.md](docs/ronavi.md).
+
+> Usa este repositorio con **"Use this template"** en GitHub.
 
 ---
 
-## Inicio rápido: PC nuevo con Windows
+## Inicio rápido
 
-Unos 20–40 minutos, casi todo descargas. Las secciones 2 a 4 explican cada paso con detalle.
-
-**1. Git y el repositorio** (PowerShell):
+**1. Git y el repositorio** (PowerShell en Windows):
 
 ```powershell
 winget install --id Git.Git -e
@@ -29,64 +42,34 @@ cd roblox-ai-studio
 
 (Si creaste tu copia con "Use this template", usa la URL de tu repositorio).
 
-**2. Todos los programas de una vez.** Acepta las licencias que pida winget:
+**2. Abre RoNavi Studio:**
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install-prereqs.ps1 -Optional
+.\ronavi
+```
+```bash
+sh ronavi.sh        # macOS / Linux
 ```
 
-Instala Git, VS Code, Python 3.12, Rokit, uv, Blender 4.5 LTS, Roblox Studio y Claude Code.
-Con `-Optional` añade Node, ffmpeg, PowerShell 7, shellcheck y GitHub CLI, y además las
-extensiones de VS Code.
+Si falta Python, el lanzador ofrece instalarlo con winget. La primera vez prepara `.venv/` (unos
+segundos) y abre el **asistente de instalación**, que hace por ti, en orden:
 
-**3. Inicia sesión en Claude Code una vez.** Ejecuta `claude`, completa el login y sal con `/exit`.
+1. Programas con winget (Git, VS Code, Python, Rokit, uv, Blender 4.5, Roblox Studio, Claude Code; opcionales con una casilla).
+2. Inicio de sesión en Claude Code (se abre `claude`; sales con `/exit`).
+3. Skills y plugins fijados en `skills.lock.json`.
+4. Dependencias de Python de las skills.
+5. `ROBLOX_GAMES_HOME`.
+6. Lo que solo puedes hacer tú: el interruptor del MCP en Studio, Script Sync apagado, Figma y `LOCAL.md`.
 
-**4. Setup del estudio.** Instala las skills, los plugins y las dependencias de Python, y pregunta por `ROBLOX_GAMES_HOME`:
+Las claves de API se definen en **Integraciones** y se guardan como variables de entorno de tu
+usuario (sección 3).
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
-```
+**3. Tu primer juego:** sección **Nuevo juego** (o `Ctrl+N`), escribe el nombre y el género y pulsa
+**Crear juego**. RoNavi crea la carpeta con su git y abre Claude Code ahí con la etapa 1
+(investigación y plan). Para seguir otro día: **Proyectos → Enter**, o **Continuar** en Inicio.
 
-Termina con la tabla de `doctor.py`: no debe quedar ninguna fila ❌.
-
-**5. Claves**, con `setx` en tu terminal, **nunca en el chat** (sección 3):
-
-```powershell
-setx ROBLOX_API_KEY "..."
-setx ROBLOX_USER_ID "..."
-setx CF_ACCOUNT_ID "..."
-setx CF_API_TOKEN "..."
-setx KAGGLE_API_TOKEN "..."
-```
-
-**6. Roblox Studio:**
-- Inicia sesión.
-- Assistant → **…** → **Manage MCP Servers** → **Enable Studio as MCP server**.
-- Deja **Script Sync** apagado.
-
-**7. Abre una terminal nueva** (para que lea las variables) y arranca Claude:
-
-```powershell
-cd $HOME\Desktop\roblox-ai-studio
-claude
-```
-
-Dentro de Claude:
-- Acepta la confianza de la carpeta.
-- `/mcp` → **figma** → autenticar.
-- `/roblox-skills-setup`: escribe los `LOCAL.md` de las skills de SyphoDev.
-- Comprueba Studio pidiendo: *"llama a list_roblox_studios y get_studio_state"*.
-
-**8. Primer juego:**
-
-```text
-complete the research and plan stage for an obby game
-```
-
-Al cerrar la sección, escribe "approved". Cuando crees el primer juego, ejecuta dentro de
-su carpeta `rokit install`, `wally install` y `rojo plugin install` (ver [games/README.md](games/README.md)).
-
-Si algo falla: `python scripts/doctor.py`, o dile a Claude *"algo falla con Studio"*.
+Los scripts de siempre siguen funcionando sin la TUI (`scripts\setup.ps1`, `scripts\install-prereqs.ps1`,
+`python scripts/doctor.py`): RoNavi los reutiliza.
 
 ---
 
@@ -222,6 +205,8 @@ export KAGGLE_API_TOKEN="tu-token"
 
 ## 4. Configuración inicial paso a paso
 
+> Con RoNavi Studio todo esto lo guía el asistente (`.\ronavi`). Esta sección describe los mismos pasos a mano.
+
 1. En GitHub: **Use this template** → crea tu repositorio → clónalo.
 2. Instala los programas obligatorios (sección 2).
    - En Windows: `powershell -ExecutionPolicy Bypass -File scripts\install-prereqs.ps1`.
@@ -260,6 +245,8 @@ export KAGGLE_API_TOKEN="tu-token"
 
 ## 5. Tu primer juego
 
+En RoNavi: **Nuevo juego** crea la carpeta y abre Claude con la etapa 1; **Proyectos → Enter** continúa. Si prefieres hacerlo a mano, abre `claude` dentro de la carpeta del juego con `--add-dir` hacia el estudio (es lo que hace RoNavi).
+
 Prompts exactos que activan `create-roblox-game`, cada uno en una sesión:
 
 ```text
@@ -293,7 +280,7 @@ el MCP de Studio no responde      (studio-doctor)
 1. Abre Studio con el lugar del juego.
 2. En la carpeta del juego, ejecuta `rojo serve`. Conecta **una vez** el plugin de Rojo en Studio y **acepta** el aviso de conexión.
 3. Da Play y comprueba en **Output** la **marca de build** (build stamp). Si no aparece, Studio corre código viejo.
-4. Ejecuta `claude` en la raíz del repo y trabaja.
+4. Abre RoNavi, elige el juego en **Proyectos** y pulsa **Enter**: Claude Code se abre en la carpeta del juego.
 5. Antes de cada commit, pasa las 4 revisiones:
    ```bash
    python ~/.claude/skills/roblox-code/scripts/check.py

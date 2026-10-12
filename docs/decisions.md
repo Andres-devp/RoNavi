@@ -113,6 +113,44 @@ encargo original y la documentación oficial están al final, con fecha de verif
 
 **Límite conocido:** una regla `Read` bloquea la herramienta Read, no un `cat .env` por Bash. La defensa real es no tener secretos en archivos: van en variables de entorno.
 
+## D13. RoNavi Studio: TUI en Python con Textual
+
+**Decisión:** la interfaz es una TUI de pantalla completa en Python 3.11+ con [Textual](https://textual.textualize.io/) 8.2.8, dentro de `ronavi/`. Se lanza con `ronavi.cmd` (Windows) o `ronavi.sh` (macOS/Linux), que crean `.venv/` en el estudio la primera vez.
+
+**Por qué:**
+- Python ya es obligatorio y toda la lógica existente (`doctor.py`, `skills_sync.py`) es Python: RoNavi la **importa** en vez de duplicarla.
+- Textual funciona en Windows Terminal, macOS y Linux, tiene temas, tablas, formularios y un *pilot* para probar la interfaz sin terminal.
+- El venv propio evita tocar el Python del usuario; el lanzador reinstala solo si cambia `ronavi/requirements.txt` (hash).
+- Descartados: Go/Bubble Tea o Rust/Ratatui (otro lenguaje y otra toolchain que instalar) e Ink/Node (Node es opcional en este estudio).
+
+**Mascota:** Navi se dibuja con medios bloques Unicode (`▀` con color de frente y de fondo, dos píxeles por celda). Se ve nítida con cualquier fuente, no necesita imágenes y ocupa unos cientos de celdas.
+
+## D14. Juegos aislados en tres capas
+
+**Decisión:** cada juego tiene su git, su `CLAUDE.md` y su `.claude/`. Las escrituras se protegen con (1) `GameScope` en RoNavi, (2) un hook `PreToolUse` copiado en cada juego (`.claude/hooks/ronavi_guard.py`) y (3) reglas `deny` de Edit con rutas absolutas para la plantilla y los juegos hermanos.
+
+**Por qué:**
+- Las reglas `deny` siempre ganan a `allow`. Con los juegos dentro de `games/` del estudio, una regla para todo el estudio bloquearía también el propio juego. Por eso se listan las entradas de la plantilla y los hermanos uno por uno, y se regeneran al crear o abrir un juego.
+- Un hook que sale con código 2 bloquea la llamada antes de evaluar los permisos, incluso en modos permisivos, y su mensaje llega a Claude. Cubre también lo añadido después de la última sincronización y los comandos de Bash/PowerShell.
+- El hook y las reglas absolutas viven en `.claude/settings.local.json` (no versionado): las rutas son de esta máquina. `settings.local.json` se carga desde la raíz del repositorio git, que es el propio juego.
+- El hook usa la forma *exec* (`command` + `args`) con el Python base del venv: no depende de que Git Bash o PowerShell interpreten comillas.
+- Si el guardián falla por un error interno, deja pasar la acción y lo avisa por stderr: un guardián roto no debe dejar inservible la sesión.
+
+## D15. Claude Code se abre con `--add-dir <estudio>`
+
+**Decisión:** RoNavi abre Claude Code con el juego como carpeta de trabajo y `--add-dir` hacia el estudio.
+
+**Por qué:**
+- Claude Code busca `.claude/skills/` hacia arriba **solo hasta la raíz del repositorio git**, y cada juego es su propio repositorio: sin `--add-dir`, el juego no vería `quota-guard`, `own-audio`, `studio-doctor` ni las skills de terceros.
+- Los scripts de esas skills calculan la raíz del estudio desde su propia ruta (`parents[4]`): copiarlas a cada juego rompería `docs/quotas.md` y el registro de cupos compartido de `work/`.
+- `--add-dir` da acceso de lectura y escritura al estudio; la escritura la cortan el hook y las reglas `deny` (D14). `work/` sigue permitido.
+
+## D16. Claves desde la TUI solo como variables de entorno de usuario
+
+**Decisión:** en Windows, *Integraciones → Definir valor…* guarda la clave en `HKCU\Environment` (como `setx`, sin su corte de 1024 caracteres) y avisa al sistema del cambio. En macOS/Linux, RoNavi muestra el `export` que debes añadir.
+
+**Por qué:** mantiene la regla del estudio (las claves viven solo en variables de entorno) y evita pasos manuales. El valor no se escribe en archivos, no se muestra y no pasa por Claude. RoNavi solo informa "configurada" o "falta".
+
 ---
 
 ## Diferencias entre el encargo y la documentación oficial

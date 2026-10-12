@@ -35,6 +35,16 @@ obligaciones prácticas de cada licencia están en `docs/licenses.md`.
 - `figma@claude-plugins-official`, del marketplace oficial de Anthropic (fuente: https://github.com/figma/mcp-server-guide).
 - Uso sujeto a los términos de Figma y a tu plan.
 
+## Bibliotecas de RoNavi Studio
+
+No se incluyen en el repositorio: `ronavi.cmd` / `ronavi.sh` las instalan con pip en `.venv/`
+desde PyPI, en la versión fijada en `ronavi/requirements.txt`.
+
+- **Textual** (Textualize) — https://github.com/Textualize/textual — MIT.
+- **Rich** (Textualize, dependencia de Textual) — https://github.com/Textualize/rich — MIT.
+
+La mascota Navi y el resto de RoNavi Studio son propios de esta plantilla (MIT, ver `LICENSE`).
+
 ## Servidores MCP
 
 - **Roblox Studio MCP**: integrado en Roblox Studio (Roblox Corporation).

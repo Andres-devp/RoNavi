@@ -15,14 +15,19 @@ export ROBLOX_GAMES_HOME="$HOME/ruta/a/roblox-ai-studio/games" # macOS/Linux, en
 
 ## Crear un juego
 
-**Opción A: con Claude (recomendada).** En Claude Code, desde la raíz del repo:
+**Opción A: con RoNavi Studio (recomendada).** `.\ronavi` → **Nuevo juego**. Crea la carpeta con su git,
+su `CLAUDE.md`, sus permisos, el MCP de Studio y el guardián que impide tocar la plantilla u otros juegos,
+y abre Claude Code ahí con la etapa 1. Para continuar: **Proyectos → Enter**. Una carpeta que ya
+existía se incorpora con **Adoptar**. Detalle en [docs/ronavi.md](../docs/ronavi.md).
+
+**Opción B: con Claude, desde la raíz del repo:**
 
 > complete the research and plan stage for an obby game
 
 `create-roblox-game` hace la sección 1 (investigación y plan) y crea la carpeta del juego.
 El código llega en la sección 2.
 
-**Opción B: a mano, solo el proyecto de código.**
+**Opción C: a mano, solo el proyecto de código.**
 
 ```bash
 python ~/.claude/skills/roblox-code/scripts/new_project.py "Coin Dash" --dir "$ROBLOX_GAMES_HOME/CoinDash"

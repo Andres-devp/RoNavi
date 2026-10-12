@@ -1,17 +1,20 @@
-# roblox-ai-studio
+# RoNavi Studio (roblox-ai-studio)
 
 Estudio para crear juegos de Roblox con Claude Code. **Respóndeme siempre en español.**
+La interfaz es **RoNavi Studio** (`ronavi.cmd` / `ronavi.sh`, código en `ronavi/`): instala, crea juegos
+y abre Claude Code dentro de cada uno. Guía: `docs/ronavi.md`.
 Documentación para humanos en español; código, nombres de archivo e identificadores en inglés.
 
 ## Mapa del repo
 
-- `games/<Juego>/`: cada juego es un proyecto Rojo independiente, con su propio git y fuera del git de este repo. `ROBLOX_GAMES_HOME` apunta a `games/`.
+- `games/<Juego>/`: cada juego es un proyecto Rojo independiente, con su propio git, su `CLAUDE.md`, su `.claude/` y un guardián (`.claude/hooks/ronavi_guard.py`); fuera del git de este repo. `ROBLOX_GAMES_HOME` apunta a `games/`.
+- `ronavi/`: RoNavi Studio (Python + Textual). `core/` sin interfaz (rutas, guard, proyectos, entorno, integraciones), `ui/` la TUI, `assets/ronavi_guard.py` el hook de cada juego. `tests/`: sus pruebas (`unittest`).
 - `.claude/skills/`: skills de proyecto.
   - Propias (versionadas): `studio-doctor`, `quota-guard`, `own-audio`.
   - De terceros (las copia el setup): `figma-to-roblox-ui`, `roblox-game-design`, `roblox-player-psychology`.
 - `~/.claude/skills` y `~/.claude/agents`: skills y agentes de SyphoDev, a nivel usuario.
 - Plugins: `roblox-skills@roblox-skills` (EL4CTEO, conocimiento) y `figma@claude-plugins-official`.
-- `docs/`: `pipeline.md`, `mcp.md`, `quotas.md` (única fuente de cifras), `licenses.md`, `troubleshooting.md`, `decisions.md`.
+- `docs/`: `ronavi.md`, `pipeline.md`, `mcp.md`, `quotas.md` (única fuente de cifras), `licenses.md`, `troubleshooting.md`, `decisions.md`.
 - `scripts/`: `setup.*`, `update-skills.*`, `doctor.py`, `skills_sync.py`. `skills.lock.json` fija los commits de terceros.
 
 ## Enrutamiento de skills
@@ -46,6 +49,7 @@ Las 5 reglas de `roblox-code`:
 
 Además:
 
+- **Si la sesión empezó dentro de `games/<Juego>/`, ese juego es tu único ámbito de escritura.** No edites la plantilla ni otros juegos; si el guardián de RoNavi bloquea algo, no lo esquives: pídeselo al usuario.
 - **Script Sync de Studio apagado.** Una sola conexión de Rojo.
 - **Un solo servidor MCP de Studio a la vez.** `Roblox_Studio` por defecto; `robloxstudio-runtime` solo para depurar en vivo, con el oficial apagado (ver `docs/mcp.md`).
 - Llama a `get_studio_state` en **cada cambio de etapa**; no supongas si Studio está en Edit o en Play.
@@ -69,6 +73,8 @@ rojo serve             # y conectar el plugin de Rojo en Studio (una vez)
 Desde la raíz del repo:
 
 ```bash
+.\ronavi                                                  # RoNavi Studio (Windows); sh ronavi.sh en macOS/Linux
+python scripts/validate.py                                # lo mismo que la CI, incluidas las pruebas de ronavi/
 python scripts/doctor.py                                  # estado de la máquina
 python .claude/skills/quota-guard/scripts/quota.py status # cupos
 ```
