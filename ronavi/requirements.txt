@@ -1,0 +1,3 @@
+# RoNavi Studio's own dependencies. bootstrap.py installs them into <studio>/.venv,
+# never into the user's Python, and reinstalls only when this file changes.
+textual==8.2.8

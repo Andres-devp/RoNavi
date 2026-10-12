@@ -370,19 +370,37 @@ def print_table() -> None:
         print("Falta algo obligatorio: arregla las filas ❌ y vuelve a ejecutar python scripts/doctor.py")
 
 
+STEPS = {
+    "Programas": check_programs,
+    "Studio": check_studio,
+    "Variables": check_env,
+    "Skills": check_skills,
+    "Plugins": check_plugins,
+    "Juegos": check_games,
+}
+
+
+def collect(groups: list[str] | None = None) -> list[Check]:
+    """Run the checks of `groups` (all by default) and return them. Used by RoNavi Studio."""
+    CHECKS.clear()
+    for name, step in STEPS.items():
+        if groups is None or name in groups:
+            step()
+    return list(CHECKS)
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--json", action="store_true", help="print the checks as JSON")
     a = ap.parse_args()
-    for step in (check_programs, check_studio, check_env, check_skills, check_plugins, check_games):
-        step()
+    collect()
     if a.json:
         print(json.dumps({"platform": f"{SYSTEM} {platform.release()}",
                           "checks": [asdict(c) for c in CHECKS]}, indent=2, ensure_ascii=False))
     else:
-        print(f"roblox-ai-studio doctor · {SYSTEM} {platform.release()} · {ss.REPO}")
+        print(f"RoNavi Studio doctor · {SYSTEM} {platform.release()} · {ss.REPO}")
         print_table()
     return 1 if any(c.status == FAIL for c in CHECKS) else 0
 

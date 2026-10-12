@@ -3,6 +3,9 @@
 
     python scripts/validate.py            # all checks; shellcheck/pwsh are skipped if missing
     python scripts/validate.py --strict   # missing shellcheck/pwsh count as failures (CI uses this)
+
+The RoNavi Studio unit tests run with this interpreter; the TUI tests are skipped when
+Textual is missing (run `.venv/Scripts/python scripts/validate.py` to include them).
 """
 
 from __future__ import annotations
@@ -16,9 +19,9 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SKIP_DIRS = {".git", "vendor", "games", "work", "node_modules", "__pycache__"}
+SKIP_DIRS = {".git", "vendor", "games", "work", "node_modules", "__pycache__", ".venv", ".ronavi"}
 OWN_SKILLS = ["studio-doctor", "quota-guard", "own-audio"]
-SHELL_SCRIPTS = ["scripts/setup.sh", "scripts/update-skills.sh"]
+SHELL_SCRIPTS = ["scripts/setup.sh", "scripts/update-skills.sh", "ronavi.sh"]
 
 
 def tracked(pattern: str) -> list[Path]:
@@ -41,6 +44,7 @@ def check_python() -> list[str]:
     files = sorted((REPO / "scripts").glob("*.py"))
     for s in OWN_SKILLS:
         files += sorted((REPO / ".claude" / "skills" / s).rglob("*.py"))
+    files += tracked("ronavi/**/*.py") + tracked("tests/*.py")
     errors = []
     for p in files:
         try:
@@ -78,13 +82,21 @@ def check_powershell(strict: bool) -> list[str]:
     return [res.stdout + res.stderr] if res.returncode else []
 
 
+def check_tests() -> list[str]:
+    res = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-t", "."], cwd=REPO,
+                         capture_output=True, text=True, encoding="utf-8", errors="replace")
+    summary = [line for line in res.stderr.splitlines() if line.startswith(("Ran ", "OK", "FAILED"))]
+    print("unittest    " + " · ".join(summary))
+    return [res.stderr[-4000:]] if res.returncode else []
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--strict", action="store_true")
     a = ap.parse_args()
-    errors = check_json() + check_python() + check_shell(a.strict) + check_powershell(a.strict)
+    errors = check_json() + check_python() + check_shell(a.strict) + check_powershell(a.strict) + check_tests()
     if errors:
         print("\nFAIL")
         for e in errors:

@@ -35,14 +35,24 @@ jobs:
           sys.exit(bad)
           EOF
 
-      - name: Compile Python (scripts and own skills)
+      - name: Install RoNavi Studio dependencies
+        run: python -m pip install -r ronavi/requirements.txt
+
+      - name: Compile Python (scripts, own skills, RoNavi Studio)
         run: |
           python -m py_compile scripts/*.py
+          find ronavi tests -name '*.py' -print0 | xargs -0 python -m py_compile
           find .claude/skills/studio-doctor .claude/skills/quota-guard .claude/skills/own-audio \
             -name '*.py' -print0 | xargs -0 -r python -m py_compile
 
       - name: shellcheck
-        run: shellcheck scripts/setup.sh scripts/update-skills.sh
+        run: shellcheck scripts/setup.sh scripts/update-skills.sh ronavi.sh
+
+      - name: RoNavi Studio tests (core, guard hook, TUI)
+        env:
+          GIT_AUTHOR_NAME: ci
+          GIT_AUTHOR_EMAIL: ci@example.invalid
+        run: python -m unittest discover -s tests -t . -v
 
       - name: Parse PowerShell scripts
         shell: pwsh

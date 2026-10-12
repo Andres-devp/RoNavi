@@ -37,3 +37,6 @@ __pycache__/
 # OS / editor noise
 .DS_Store
 Thumbs.db
+
+# RoNavi Studio: per-machine state (config.json)
+/.ronavi/
