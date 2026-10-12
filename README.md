@@ -1,4 +1,5 @@
 # RoNavi Studio
+<img width="886" height="376" alt="image" src="https://github.com/user-attachments/assets/2c84749a-b59f-4b9a-97fe-c846856e7b45" />
 
 Estudio para crear juegos de Roblox con **Claude Code**, desde una sola interfaz de terminal.
 Combina el **MCP oficial de Roblox Studio**, **Rojo**, **Blender**, **Figma** y un conjunto de skills
