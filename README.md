@@ -1,19 +1,10 @@
 # RoNavi Studio
-<img width="886" height="376" alt="image" src="https://github.com/user-attachments/assets/2c84749a-b59f-4b9a-97fe-c846856e7b45" />
 
 Estudio para crear juegos de Roblox con **Claude Code**, desde una sola interfaz de terminal.
 Combina el **MCP oficial de Roblox Studio**, **Rojo**, **Blender**, **Figma** y un conjunto de skills
 elegido y fijado por commit. Funciona en Windows (prioridad), macOS y Linux (en Linux, sin Studio).
 
-```text
-   ▄▀▄          ▄▀▄      RoNavi Studio
-   █ ▀▄▄▄▄▄▄▄▄▀ █        ─────────────
-   █   ▀▄   ▄▀   █       Instalación · Juegos · Skills
-    ▀▄  ●   ●  ▄▀        Herramientas · Integraciones
-      ▀▄▄ ▼ ▄▄▀
-     ▓▓▓▓▓▓▓▓▓▓▓         Navi, el zorro de la bufanda roja
-          ▓▓
-```
+<img width="886" height="376" alt="image" src="https://github.com/user-attachments/assets/2c84749a-b59f-4b9a-97fe-c846856e7b45" />
 
 **RoNavi Studio** es el punto de entrada único: la primera vez instala y configura todo con un
 asistente; después crea juegos, los continúa con Claude Code en la carpeta correcta y gestiona
