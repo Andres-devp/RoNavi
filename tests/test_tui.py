@@ -59,6 +59,26 @@ class TuiTests(StudioTestCase, unittest.IsolatedAsyncioTestCase):
             await pilot.press("escape")  # finish: asks to confirm when steps are pending, or closes
             await pilot.pause()
 
+    async def test_wizard_optional_checkbox_rebuilds_steps(self):
+        # Regression: toggling the checkbox crashed with DuplicateIds (clear() is asynchronous).
+        app = self.make_app(first_run=True)
+        async with app.run_test(size=(150, 48)) as pilot:
+            await pilot.press("enter")
+            wizard = app.screen
+            self.assertIsInstance(wizard, WizardScreen)
+            checkbox = wizard.query_one("#wiz-optional", Checkbox)
+            for _ in range(3):
+                checkbox.toggle()
+                await pilot.pause(0.2)
+            await pilot.click("#wiz-optional")
+            await pilot.pause(0.3)
+            self.assertIs(app.screen, wizard)
+            steps = wizard.query_one("#wiz-steps")
+            self.assertEqual(len(steps.children), len(wizard.steps))
+            programs = next(s for s in wizard.steps if s.key == "programs")
+            if programs.commands:
+                self.assertEqual("-Optional" in programs.commands[0], checkbox.value)
+
     async def test_create_a_game_from_the_form(self):
         app = self.make_app()
         async with app.run_test(size=(150, 48)) as pilot:

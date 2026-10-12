@@ -54,18 +54,18 @@ class WizardScreen(Screen[None]):
                     yield Button("Terminar", id="wiz-finish", variant="success")
         yield Footer()
 
-    def on_mount(self) -> None:
-        self.build_steps()
+    async def on_mount(self) -> None:
+        await self.build_steps()
         self.ronavi_refresh(None)
 
-    def build_steps(self) -> None:
+    async def build_steps(self) -> None:
+        """(Re)build the step list. clear() and extend() are awaited: removal is asynchronous."""
         optional = self.query_one("#wiz-optional", Checkbox).value
-        self.steps = envmod.setup_steps(self.app.studio, optional)  # type: ignore[attr-defined]
         lv = self.query_one("#wiz-steps", ListView)
         index = lv.index or 0
-        lv.clear()
-        for step in self.steps:
-            lv.append(ListItem(Label(self._line(step)), id=f"step-{step.key}"))
+        self.steps = envmod.setup_steps(self.app.studio, optional)  # type: ignore[attr-defined]
+        await lv.clear()
+        await lv.extend(ListItem(Label(self._line(step))) for step in self.steps)
         lv.index = min(index, len(self.steps) - 1)
         self.show_detail()
 
@@ -112,15 +112,15 @@ class WizardScreen(Screen[None]):
 
     def current(self) -> SetupStep | None:
         lv = self.query_one("#wiz-steps", ListView)
-        if lv.index is None or not self.steps:
+        if lv.index is None or not 0 <= lv.index < len(self.steps):
             return None
         return self.steps[lv.index]
 
     def on_list_view_highlighted(self, _: ListView.Highlighted) -> None:
         self.show_detail()
 
-    def on_checkbox_changed(self, _: Checkbox.Changed) -> None:
-        self.build_steps()
+    async def on_checkbox_changed(self, _: Checkbox.Changed) -> None:
+        await self.build_steps()
 
     def show_detail(self) -> None:
         step = self.current()
