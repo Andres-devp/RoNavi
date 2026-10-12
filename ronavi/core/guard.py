@@ -86,7 +86,8 @@ class GameScope:
 
     def check(self, path: Path | str) -> Path:
         """Return the resolved absolute path, or raise if it escapes the game."""
-        p = Path(path)
+        # A backslash is a separator on Windows; elsewhere treat it as one too, so "..\x" cannot slip through.
+        p = Path(str(path).replace("\\", "/")) if os.sep == "/" else Path(path)
         target = real(p if p.is_absolute() else self.root / p)
         if not is_within(target, self.root):
             raise GuardError(f"Escritura rechazada: {target} está fuera del juego {self.root.name}.")

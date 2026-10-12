@@ -69,6 +69,8 @@ def to_path(raw: str, cwd: Path) -> Path:
     s = raw.strip().strip("'\"")
     if s.startswith("~"):
         s = os.path.expanduser(s)
+    if os.sep == "/":
+        s = s.replace("\\", "/")  # PowerShell-style separators on macOS/Linux
     if os.name == "nt":
         m = GITBASH_DRIVE_RE.match(s)  # Git Bash: /c/Users/... -> C:/Users/...
         if m:
