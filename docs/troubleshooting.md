@@ -31,6 +31,8 @@ en días. Actualiza Studio antes de una sesión larga y revisa el interruptor.
 | El plugin dice conectado pero no llega ningún cambio | **El aviso de conexión no se aceptó** | En Studio, abre el panel de Rojo y pulsa Connect / Accept. Una conexión TCP no es una sesión sincronizada. |
 | La marca de build no aparece en Output al dar Play | Studio corre código viejo | Rojo no sincroniza: revisa las tres filas anteriores |
 | Cambios hechos en Studio que "vuelven atrás" | Script Sync de Studio encendido, o se editó en Studio | Apaga Script Sync; edita siempre en disco |
+| `rokit install` dice que `JohnnyMorganz/luau-lsp` *has not been marked as trusted* | Rokit pide confirmar cada herramienta nueva; RoNavi lo intenta solo al añadir luau-lsp | `rokit trust JohnnyMorganz/luau-lsp` y repite `rokit install`. |
+| Claude no muestra `Found N new diagnostic issues` al editar un `.luau` | Falta luau-lsp en el juego, o el plugin `ronavi-luau` no se instaló | En el juego: `rokit install`. Después, `/plugin` → **Errors**; si no aparece el plugin, vuelve a abrir el juego desde RoNavi (lo instala). Ver `docs/mcp.md`. |
 | `rojo` no se encuentra dentro del juego | Falta `rokit install` en esa carpeta, o falta `~/.rokit/bin` | `rokit install` (lee el `aftman.toml` del juego). Si Rokit vino de winget, ejecuta antes `rokit self-install` (el setup lo hace) y abre una terminal nueva. |
 
 ## Windows: `uvx` o `npx` dan `ENOENT`

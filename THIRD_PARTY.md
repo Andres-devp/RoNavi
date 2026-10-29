@@ -49,7 +49,7 @@ La mascota Navi y el resto de RoNavi Studio son propios de esta plantilla (MIT, 
 
 - **Roblox Studio MCP**: integrado en Roblox Studio (Roblox Corporation).
 - **ahujasid/blender-mcp** (`mcp-for-blender`): https://github.com/ahujasid/blender-mcp — MIT. No es un producto de la Blender Foundation.
-- **Chrrxs/robloxstudio-mcp** (`@chrrxs/robloxstudio-mcp` 3.2.0): https://github.com/Chrrxs/robloxstudio-mcp — MIT.
+- **Chrrxs/robloxstudio-mcp** (`@chrrxs/robloxstudio-mcp` 3.4.2): https://github.com/Chrrxs/robloxstudio-mcp — MIT.
 
 ## Fuentes tipográficas
 
@@ -66,6 +66,6 @@ La mascota Navi y el resto de RoNavi Studio son propios de esta plantilla (MIT, 
 
 ## Herramientas
 
-Rojo, Rokit, Wally, Lune, Selene, StyLua y luau-lsp son proyectos de código abierto de
-sus autores (MPL-2.0 o MIT según el proyecto). Blender es GPL. Cada uno se instala
+Rojo, Rokit, Wally, Lune, Selene, StyLua, luau-lsp y Asphalt (https://github.com/jackTabsCode/asphalt,
+MIT; lo usa `own-images`) son proyectos de código abierto de sus autores (MPL-2.0 o MIT según el proyecto). Blender es GPL. Cada uno se instala
 desde su fuente oficial; ninguno se redistribuye aquí.

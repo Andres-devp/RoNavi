@@ -163,6 +163,102 @@ encargo original y la documentación oficial están al final, con fecha de verif
 
 **Por qué:** RoNavi depende de todo el estudio (skills, `scripts/`, `.claude/`, `docs/`), no solo de su código Python; un paquete de PyPI tendría que descargar el estudio aparte y mantener dos versiones sincronizadas. Con el clon hay una sola fuente de verdad, actualizar es git, y los juegos (`games/`) e ideas (`work/`) quedan fuera porque git los ignora.
 
+## D19. `robloxstudio-runtime` 3.4.2, sin herramientas que escriban scripts
+
+**Decisión:** el pin pasa de 3.2.0 a 3.4.2. Sus cinco herramientas que editan scripts (`set_script_source`,
+`edit_script_lines`, `insert_script_lines`, `delete_script_lines`, `find_and_replace_in_scripts`) van a
+`permissions.deny`, y las que actúan sobre la cuenta o insertan contenido van a `permissions.ask`.
+Al sincronizar, RoNavi lleva el pin y las reglas nuevas a cada juego.
+
+**Por qué:**
+- 3.4.2 trae el MicroProfiler (`capture_micro_profiler`), escritura atómica y correcciones de playtests multijugador.
+- Escribir scripts en Studio rompe la regla 1 (el disco es la única verdad): Rojo los sobrescribiría o, peor, quedarían solo en Studio.
+- Las reglas de un juego solo se **añaden** (nunca se quitan las suyas) y los archivos solo se reescriben si cambian.
+
+**Descartado:** el plugin oficial `Roblox/roblox-studio-agent-plugin` y Quick Connect. Los dos registran otro
+servidor contra el mismo Studio, que es lo que D3 evita.
+
+## D20. Luau LSP dentro de Claude Code con un plugin local
+
+**Decisión:** RoNavi genera un marketplace de un solo plugin (`ronavi-luau@ronavi-studio`) en `.ronavi/plugins/`,
+lo registra en el `settings.local.json` de cada juego (fuente `directory`) y lo instala con
+`claude plugin install --scope local` al abrir el juego. El `.lsp.json` lanza `ronavi/assets/luau_lsp_server.py`,
+que descarga y guarda en caché las definiciones de Roblox, pasa la plataforma con `--settings` (claves con puntos,
+como las de VS Code) y genera `sourcemap.json` una vez al arrancar. El hook de después de editar lo regenera
+cuando Claude crea un `.luau`.
+
+**Sin `--watch`:** un `rojo sourcemap --watch` hijo sobrevive cuando se mata el servidor (en Windows, `terminate()`
+solo cierra el shim de Rokit, no el `rojo.exe` real). En las pruebas quedaron procesos huérfanos. Además, luau-lsp
+no relee el sourcemap en caliente sin soporte del cliente (`didChangeWatchedFiles`).
+
+**Por qué:**
+- Con LSP, Claude ve los errores de tipos tras cada edición, sin esperar a `check.py`.
+- El oficial `lua-lsp@claude-plugins-official` es Lua genérico: no conoce los tipos de Roblox. Los plugins de Luau publicados no tienen historial.
+- `.lsp.json` necesita la ruta del intérprete, que es de esta máquina: por eso se genera y no se versiona.
+- `enabledPlugins` no descarga nada (documentado): sin `claude plugin install` el plugin no carga. Claude Code lee
+  un marketplace `directory` en sitio, así que regenerar el plugin no exige reinstalarlo.
+- Para no lanzar `claude` en cada apertura, RoNavi mira primero el registro de plugins de Claude Code. Es un archivo
+  interno: si no se puede leer, instala igualmente.
+
+**Descartado:** `--plugin-dir` en el lanzador. Solo vale para sesiones abiertas por RoNavi; con el plugin instalado,
+un `claude` lanzado a mano en el juego también tiene LSP.
+
+## D21. Toolchain de los juegos más nueva que la del scaffold, salvo Lune
+
+**Decisión:** después del scaffold, `ronavi/core/toolchain.py` sube en el `aftman.toml` del juego Rojo a 7.7.1,
+Selene a 0.32.0 y StyLua a 2.6.0, y añade luau-lsp 1.70.1 (marcándolo como confiable en Rokit). Nunca baja una
+versión. *Actualizar todo* hace lo mismo con los juegos existentes. El generador de SyphoDev no se toca (como en D11).
+
+**Por qué:** verificado el 2026-10-29 generando un juego, ejecutando `rokit install` y `check.py`: las cuatro
+revisiones pasan con esas versiones.
+
+**Lune se queda en 0.8.9:** desde 0.9.0, los `require` deben empezar por `./`, `../` o `@`, y el runner de specs del
+scaffold no carga ninguna spec. Probadas 0.9.4, 0.10.5 y 0.11.1, con el mismo fallo. Subirla exige cambiar el runner de
+SyphoDev.
+
+**Límite conocido:** StyLua 2.x puede formatear distinto el código que ya existía. Si `check.py` marca formato
+después de subirla, `check.py --fix` lo arregla.
+
+## D22. Imágenes propias con Asphalt; el audio sigue en `own-audio`
+
+**Decisión:** la skill `own-images` sube las imágenes de `assets/images/` con [Asphalt](https://github.com/jackTabsCode/asphalt)
+2.0.2 (MIT) y deja los IDs en un módulo Luau generado (`src/shared/Assets/`) y en `asphalt.lock.toml`.
+El audio no pasa por Asphalt.
+
+**Por qué:**
+- Hasta ahora una imagen propia solo llegaba a Roblox con `upload_image` de Studio (gasta, escribe en Studio) o a mano.
+- Asphalt tiene lockfile por hash, alpha bleed, SVG→PNG y codegen. Su `sync cloud --dry-run` cuenta lo pendiente sin
+  clave, que es justo lo que necesita `quota-guard` para estimar antes de subir.
+- `own-audio` ya resuelve el audio con su caché por hash, su registro por archivo en un cupo pequeño (100 al mes) y su
+  SoundBank por roles. Pasarlo a Asphalt perdería eso, y dos caminos sobre los mismos archivos duplicarían subidas.
+- `asphalt.toml` lleva el ID del creador, así que se regenera en cada ejecución desde `ROBLOX_USER_ID` /
+  `ROBLOX_GROUP_ID` y se ignora en git. La clave se pasa en `ASPHALT_API_KEY`, nunca como argumento.
+- `rokit add` solo funciona con `rokit.toml` y los juegos usan `aftman.toml`: la skill edita el manifiesto y ejecuta
+  `rokit trust` + `rokit install`.
+
+**Sin verificar:** una subida real (necesita tu clave). La forma exacta del módulo generado se ve tras la primera subida.
+
+## D23. Specs en un servidor real con Open Cloud Luau Execution
+
+**Decisión:** la skill `cloud-test` construye el juego con `ServerStorage.RoNaviCloudTests` (copias de `tests/` y
+`src/shared/`), guarda la versión en un place **de pruebas** (`versionType=Saved`), lanza una tarea de Luau Execution
+con `runner.luau` y lee el informe JSON que devuelve la tarea. Las specs que necesitan el motor van en `tests/engine/`.
+
+**Por qué:**
+- Cubre el hueco entre `lune run test` (sin motor) y el playtest en Studio (manual): `Vector3`, `CFrame`, `Instance`
+  y el Luau de Roblox de verdad, sin abrir Studio, y sirve para CI.
+- Copiar `tests/` y `src/shared/` en una carpeta con la misma forma que el disco hace que los `require("../src/...")`
+  de las specs resuelvan igual que en Lune: el contrato de las specs del scaffold no cambia.
+- Lune solo lee `tests/` sin subcarpetas, así que `tests/engine/` no rompe `check.py`.
+- Los scripts del place no se ejecutan durante la tarea (documentado), así que probar no tiene efectos secundarios en el
+  place; aun así, guardar una versión sí cambia lo que abre el place: por eso solo un place de pruebas, con IDs
+  propios (`ROBLOX_TEST_*`) y `--yes` explícito.
+- Biblioteca estándar (`urllib`): sin dependencias nuevas.
+
+**Sin verificar:** la ejecución real contra Roblox (necesita tu place de pruebas y tu clave). Probado: la construcción del
+place, la estructura que ve el runner (leída con Lune), el runner con luau-lsp (tipos de Roblox), Selene y StyLua, y el
+cliente HTTP con respuestas simuladas.
+
 ---
 
 ## Diferencias entre el encargo y la documentación oficial
