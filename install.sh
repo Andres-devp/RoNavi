@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # RoNavi Studio installer for macOS and Linux. Run it again to update.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Andres-devp/RoNavi/main/install.sh | sh
 #
 # 1. Checks git and Python 3.11+.
 # 2. Clones the studio into $RONAVI_HOME (default: ~/RoNavi) at the newest release tag
@@ -12,7 +12,7 @@
 # RONAVI_NO_PATH=1 (portable install: PATH untouched, nothing is started).
 set -eu
 
-repo=${RONAVI_REPO:-https://github.com/Andres-devp/roblox-ai-studio.git}
+repo=${RONAVI_REPO:-https://github.com/Andres-devp/RoNavi.git}
 target=${RONAVI_HOME:-$HOME/RoNavi}
 
 say() { printf '\033[38;2;255;138;61m▌ RoNavi Studio\033[0m %s\n' "$1"; }

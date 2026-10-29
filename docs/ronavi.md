@@ -5,10 +5,10 @@ instalación inicial, creación de juegos, skills, herramientas, integraciones y
 Su mascota es **Navi**, un zorro con bufanda roja.
 
 ```powershell
-irm https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.ps1 | iex   # instalar (Windows)
+irm https://raw.githubusercontent.com/Andres-devp/RoNavi/main/install.ps1 | iex   # instalar (Windows)
 ```
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.sh | sh   # macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/Andres-devp/RoNavi/main/install.sh | sh   # macOS / Linux
 ```
 
 Después, en cualquier terminal y carpeta:
@@ -152,7 +152,7 @@ ronavi --version                              versión y commit de git
 ## Versiones y actualizaciones
 
 El estudio clonado **es** la instalación; no hay paquete aparte (D18). Cada versión es un tag de git
-`vX.Y.Z` con su [GitHub Release](https://github.com/Andres-devp/roblox-ai-studio/releases) y sus notas en
+`vX.Y.Z` con su [GitHub Release](https://github.com/Andres-devp/RoNavi/releases) y sus notas en
 [CHANGELOG.md](../CHANGELOG.md).
 
 - **Actualizar:** `ronavi update`, *Configuración → Actualizar RoNavi* o volver a ejecutar el instalador.

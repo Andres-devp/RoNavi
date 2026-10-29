@@ -1,6 +1,6 @@
 # RoNavi Studio installer for Windows (PowerShell 5.1+). Run it again to update.
 #
-#   irm https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/Andres-devp/RoNavi/main/install.ps1 | iex
 #
 # 1. Checks git and Python 3.11+ (offers winget when one is missing).
 # 2. Clones the studio into $env:RONAVI_HOME (default: $HOME\RoNavi) at the newest release
@@ -13,7 +13,7 @@
 
 & {
     $ErrorActionPreference = 'Stop'
-    $repo = if ($env:RONAVI_REPO) { $env:RONAVI_REPO } else { 'https://github.com/Andres-devp/roblox-ai-studio.git' }
+    $repo = if ($env:RONAVI_REPO) { $env:RONAVI_REPO } else { 'https://github.com/Andres-devp/RoNavi.git' }
     $target = if ($env:RONAVI_HOME) { $env:RONAVI_HOME } else { Join-Path $HOME 'RoNavi' }
 
     function Say([string]$msg) {

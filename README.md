@@ -21,10 +21,10 @@ otros juegos. Guía completa: [docs/ronavi.md](docs/ronavi.md).
 **1. Instala RoNavi Studio con una línea:**
 
 ```powershell
-irm https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Andres-devp/RoNavi/main/install.ps1 | iex
 ```
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.sh | sh   # macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/Andres-devp/RoNavi/main/install.sh | sh   # macOS / Linux
 ```
 
 El instalador comprueba git y Python 3.11+ (en Windows ofrece instalarlos con winget), descarga el
@@ -37,8 +37,8 @@ basta con escribir `ronavi` en cualquier terminal. Para otra carpeta: `$env:RONA
 
 ```powershell
 winget install --id Git.Git -e
-git clone https://github.com/Andres-devp/roblox-ai-studio.git
-cd roblox-ai-studio
+git clone https://github.com/Andres-devp/RoNavi.git
+cd RoNavi
 .\ronavi                      # sh ronavi.sh en macOS / Linux
 ```
 
