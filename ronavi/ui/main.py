@@ -1,4 +1,4 @@
-"""Main screen: sidebar navigation and the seven sections."""
+"""Main screen: sidebar navigation and the eight sections."""
 
 from __future__ import annotations
 
@@ -17,9 +17,10 @@ from textual.widgets.option_list import Option
 
 from ronavi import __version__
 from ronavi.core import environment as envmod
-from ronavi.core import integrations, skills
+from ronavi.core import integrations, skills, updates
 from ronavi.core import templates as T
 from ronavi.core.guard import GuardError, is_within, same_path, validate_name
+from ronavi.core.ideas import Idea, create_idea
 from ronavi.core.launcher import claude_executable, open_folder, open_vscode
 from ronavi.core.projects import (Game, adopt_game, create_game, launch_env, scaffold_script, scope_for,
                                   sync_all_guards, sync_guard)
@@ -30,6 +31,7 @@ from ronavi.ui.welcome import Fox
 SECTIONS = [
     ("home", "◆ Inicio"),
     ("projects", "▤ Proyectos"),
+    ("ideas", "✦ Ideas"),
     ("new", "✚ Nuevo juego"),
     ("skills", "✧ Skills"),
     ("tools", "▲ Herramientas"),
@@ -79,6 +81,7 @@ class HomeSection(Section):
                 with Horizontal(classes="button-row"):
                     yield Button("▶ Continuar", id="home-continue", variant="primary")
                     yield Button("✚ Nuevo juego", id="home-new")
+                    yield Button("✦ Explorar idea", id="home-idea")
                     yield Button("Asistente", id="home-wizard")
                     yield Button("Diagnóstico", id="home-doctor")
         yield Label("Juegos recientes", classes="subtitle")
@@ -132,6 +135,8 @@ class HomeSection(Section):
                 self.rapp.open_game(last)
         elif bid == "home-new":
             screen.show_section("new")
+        elif bid == "home-idea":
+            screen.show_section("ideas")
         elif bid == "home-wizard":
             from ronavi.ui.wizard import WizardScreen
             self.app.push_screen(WizardScreen())
@@ -346,13 +351,116 @@ class ProjectsSection(Section):
             self.rapp.game_tool(g, ["rojo", "serve"], f"rojo serve · {g.name}", window=True)
 
 
+# ============================================================================ ideas
+
+class IdeasSection(Section):
+    BINDINGS = [Binding("f", "folder", "Carpeta")]
+
+    def compose(self) -> ComposeResult:
+        yield Label("Ideas", classes="section-title")
+        yield Static("¿Aún no sabes qué juego hacer? Claude investiga el mercado y te propone tres conceptos en "
+                     "una carpeta de ideas (work/ideas/), sin nombre, género ni git. Cuando elijas uno, conviértelo "
+                     "en juego: su investigación pasa a docs/research/.", classes="muted")
+        with Vertical(classes="form card"):
+            yield Label("¿Qué tienes en mente? (opcional)")
+            with Horizontal(classes="inline-row"):
+                yield Input(placeholder="Algo con zombies… o déjalo vacío y que Claude proponga", id="id-hint",
+                            max_length=200)
+                yield Button("✦ Explorar idea", id="id-explore", variant="primary")
+            yield Checkbox("Abrir Claude Code al crearla (investigación de mercado y 3 conceptos en IDEA.md)",
+                           value=True, id="id-launch")
+        yield Label("Ideas guardadas", classes="subtitle")
+        yield DataTable(id="id-table", cursor_type="row", zebra_stripes=True)
+        with Horizontal(classes="button-row"):
+            yield Button("▶ Abrir en Claude Code", id="id-open")
+            yield Button("✚ Convertir en juego", id="id-convert")
+            yield Button("Carpeta", id="id-folder")
+
+    def on_mount(self) -> None:
+        table = self.query_one("#id-table", DataTable)
+        table.add_column("Idea")
+        table.add_column("Título")
+        table.add_column("Estado")
+        table.add_column("Modificada")
+        self.ronavi_refresh(None)
+
+    def ronavi_refresh(self, message: object) -> None:
+        from ronavi.ui.app import EnvChanged
+        if isinstance(message, EnvChanged):
+            return
+        table = self.query_one("#id-table", DataTable)
+        current = self.selected()
+        table.clear()
+        for idea in self.rapp.ideas:
+            state = (Text(f"→ {idea.converted_to}", style="#5ed6a0") if idea.converted_to else
+                     Text("IDEA.md", style="#ffb37a") if idea.has_notes else Text("sin investigar", style="#8b8597"))
+            table.add_row(idea.id, Text(idea.title, style="bold"), state, ago(idea.modified), key=idea.id)
+        if current:
+            try:
+                table.move_cursor(row=table.get_row_index(current.id))
+            except Exception:
+                pass
+        for bid in ("#id-open", "#id-convert", "#id-folder"):
+            self.query_one(bid, Button).disabled = not self.rapp.ideas
+
+    def selected(self) -> Idea | None:
+        table = self.query_one("#id-table", DataTable)
+        if not table.row_count:
+            return None
+        try:
+            key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value
+        except Exception:
+            return None
+        return next((i for i in self.rapp.ideas if i.id == key), None)
+
+    @on(Button.Pressed, "#id-explore")
+    @on(Input.Submitted, "#id-hint")
+    def explore(self, _event: object = None) -> None:
+        app = self.rapp
+        hint_input = self.query_one("#id-hint", Input)
+        hint = hint_input.value
+        try:
+            idea = create_idea(app.studio, hint)
+        except (GuardError, OSError) as exc:
+            app.notify(str(exc), title="No se creó la idea", severity="error")
+            return
+        hint_input.value = ""
+        app.reload_games()
+        if self.query_one("#id-launch", Checkbox).value:
+            app.open_idea(idea, prompt=T.idea_prompt(hint))
+        else:
+            app.notify(f"Idea creada en {idea.root}", title="Idea")
+
+    @on(DataTable.RowSelected, "#id-table")
+    @on(Button.Pressed, "#id-open")
+    def open_idea(self, _event: object = None) -> None:
+        if idea := self.selected():
+            prompt = None if idea.has_notes else T.idea_prompt(idea.hint)
+            self.rapp.open_idea(idea, prompt=prompt)
+
+    @on(Button.Pressed, "#id-convert")
+    def convert(self) -> None:
+        if idea := self.selected():
+            self.screen.show_section("new")
+            self.screen.query_one("#new", NewGameSection).use_idea(idea)
+
+    @on(Button.Pressed, "#id-folder")
+    def action_folder(self) -> None:
+        if idea := self.selected():
+            open_folder(idea.root)
+
+
 # ============================================================================ new game
+
+NO_IDEA = ""
+
 
 class NewGameSection(Section):
     def compose(self) -> ComposeResult:
         yield Label("Nuevo juego", classes="section-title")
         yield Static("Cada juego vive en su propia carpeta, con su git, su CLAUDE.md, sus permisos y un guardián "
-                     "que impide que Claude toque la plantilla u otros juegos.", classes="muted")
+                     "que impide que Claude toque la plantilla u otros juegos. ¿Sin nombre todavía? Empieza en "
+                     "✦ Ideas.", classes="muted")
         with Vertical(classes="form card"):
             yield Label("Nombre")
             yield Input(placeholder="Coin Dash", id="ng-name", max_length=40)
@@ -362,6 +470,8 @@ class NewGameSection(Section):
             yield Label("La idea en una frase (opcional)")
             yield Input(placeholder="Recoge monedas mientras esquivas lava en un mundo de caramelo", id="ng-desc",
                         max_length=200)
+            yield Label("Basado en una idea explorada (opcional: su investigación se copia a docs/research/)")
+            yield Select([("Ninguna: empezar desde cero", NO_IDEA)], value=NO_IDEA, allow_blank=False, id="ng-idea")
             yield Checkbox("Repositorio git propio", value=True, id="ng-git")
             yield Checkbox("Commit inicial", value=True, id="ng-commit")
             yield Checkbox("Generar ya el proyecto de código (roblox-code · new_project.py)", value=False,
@@ -376,7 +486,33 @@ class NewGameSection(Section):
             code = self.query_one("#ng-code", Checkbox)
             code.disabled = True
             code.label = "Generar ya el proyecto de código (requiere instalar las skills de SyphoDev)"
+        self.ronavi_refresh(None)
         self._preview()
+
+    def ronavi_refresh(self, _message: object) -> None:
+        select = self.query_one("#ng-idea", Select)
+        current = select.value
+        options = [("Ninguna: empezar desde cero", NO_IDEA)]
+        for idea in self.rapp.ideas:
+            done = f" (ya es {idea.converted_to})" if idea.converted_to else ""
+            options.append((f"{idea.id} · {idea.title}{done}", idea.id))
+        select.set_options(options)
+        select.value = current if any(v == current for _, v in options) else NO_IDEA
+
+    def selected_idea(self) -> Idea | None:
+        value = self.query_one("#ng-idea", Select).value
+        return next((i for i in self.rapp.ideas if i.id == value), None)
+
+    def use_idea(self, idea: Idea) -> None:
+        """Ideas → Convertir en juego: preselect the idea and suggest its title as the name."""
+        self.query_one("#ng-idea", Select).value = idea.id
+        name = self.query_one("#ng-name", Input)
+        if not name.value.strip():
+            try:
+                name.value = validate_name(idea.title)[0]
+            except GuardError:
+                pass
+        name.focus()
 
     @on(Input.Changed, "#ng-name")
     def _preview(self, _event: object = None) -> None:
@@ -403,7 +539,8 @@ class NewGameSection(Section):
             commit.value = False
 
     @on(Button.Pressed, "#ng-create")
-    @on(Input.Submitted)
+    @on(Input.Submitted, "#ng-name")
+    @on(Input.Submitted, "#ng-desc")
     def create(self, _event: object = None) -> None:
         app = self.rapp
         name = self.query_one("#ng-name", Input).value
@@ -416,11 +553,13 @@ class NewGameSection(Section):
         genre = str(self.query_one("#ng-genre", Select).value)
         desc = self.query_one("#ng-desc", Input).value
         opts = {k: self.query_one(f"#ng-{k}", Checkbox).value for k in ("git", "commit", "code", "open")}
+        idea = self.selected_idea()
         created: dict[str, Game] = {}
 
         def job(log) -> None:
             created["game"] = create_game(app.studio, display, genre, desc, init_git=opts["git"],
-                                          commit=opts["commit"] and opts["git"], scaffold=opts["code"], progress=log)
+                                          commit=opts["commit"] and opts["git"], scaffold=opts["code"],
+                                          from_idea=idea.root if idea else None, progress=log)
 
         def after(ok: bool) -> None:
             game = created.get("game")
@@ -428,11 +567,13 @@ class NewGameSection(Section):
                 return
             self.query_one("#ng-name", Input).value = ""
             self.query_one("#ng-desc", Input).value = ""
+            self.query_one("#ng-idea", Select).value = NO_IDEA
             app.studio.config.last_game = game.slug
             app.save_config()
             self.screen.show_section("projects")
             if opts["open"]:
-                app.open_game(game, prompt=T.first_prompt(game.name, game.slug, genre, desc))
+                app.open_game(game, prompt=T.first_prompt(game.name, game.slug, genre, desc,
+                                                          has_research=idea is not None))
 
         app.run_task(f"Creando {display}", [Job(f"Crear {slug}", func=job)], after)
 
@@ -703,6 +844,7 @@ class SettingsSection(Section):
                 yield Button("Asistente de instalación", id="st-wizard")
                 yield Button("Añadir 'ronavi' al PATH", id="st-path")
                 yield Button("Revisar guardianes", id="st-guards")
+                yield Button("Actualizar RoNavi", id="st-update")
         yield Label("Acerca de", classes="subtitle")
         yield Static("", id="st-about", classes="card")
 
@@ -712,12 +854,14 @@ class SettingsSection(Section):
     def ronavi_refresh(self, _message: object) -> None:
         studio = self.rapp.studio
         t = Text()
-        t.append(f"RoNavi Studio {__version__}\n", style="bold #ff8a3d")
+        rev = updates.describe(studio.root)
+        t.append(f"RoNavi Studio {__version__}", style="bold #ff8a3d")
+        t.append(f"  ({rev})\n" if rev else "\n", style="#8b8597")
         t.append(f"Estudio:       {studio.root}\n")
         t.append(f"Juegos:        {studio.games_home}\n")
         t.append(f"Claude Code:   {claude_executable() or 'no encontrado'}\n")
         t.append(f"Python:        {envmod.system_python()}\n")
-        t.append(f"'ronavi' en PATH: {'sí' if integrations.path_contains(studio.root) else 'no'}\n")
+        t.append(f"'ronavi' en PATH: {'sí' if integrations.ronavi_on_path(studio) else 'no'}\n")
         self.query_one("#st-about", Static).update(t)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -736,6 +880,14 @@ class SettingsSection(Section):
                         "Se crea el enlace ~/.local/bin/ronavi hacia el lanzador del estudio.",
                         lambda: (app.notify(integrations.add_to_user_path(studio.root), title="PATH"),
                                  self.ronavi_refresh(None)))
+        elif bid == "st-update":
+            def run_update() -> None:
+                app.run_task("Actualizar RoNavi",
+                             [Job("git fetch y actualizar", func=lambda log: log(updates.update(studio, log)))],
+                             lambda _ok: self.ronavi_refresh(None))
+            app.confirm("Actualizar RoNavi",
+                        "Descarga la última versión del estudio con git. Tus juegos, ideas y configuración no se "
+                        "tocan. Si el estudio tiene cambios sin guardar, no se actualiza.", run_update)
         elif bid == "st-guards":
             app.run_task("Guardianes", [Job("Sincronizar el guardián de todos los juegos",
                                             func=lambda log: [log("! " + p) for p in sync_all_guards(studio, log)])])
@@ -792,10 +944,11 @@ class MainScreen(Screen[None]):
                                                (f"\nv{__version__}", "#8b8597")), id="brand-name")
                 yield OptionList(*(Option(f"{label}", id=key) for key, label in SECTIONS), id="nav")
                 yield Static("", id="env-pill")
-                yield Static("1-7 secciones · ? ayuda", classes="muted nav-hint")
+                yield Static("1-8 secciones · ? ayuda", classes="muted nav-hint")
             with ContentSwitcher(id="content", initial="home"):
                 yield HomeSection(id="home")
                 yield ProjectsSection(id="projects")
+                yield IdeasSection(id="ideas")
                 yield NewGameSection(id="new")
                 yield SkillsSection(id="skills")
                 yield ToolsSection(id="tools")
@@ -836,6 +989,8 @@ class MainScreen(Screen[None]):
         self.query_one("#content", ContentSwitcher).current = key
         if key == "new":
             self.query_one("#ng-name", Input).focus()
+        elif key == "ideas":
+            self.query_one("#id-hint", Input).focus()
 
     def action_section(self, key: str) -> None:
         self.show_section(key)
@@ -849,9 +1004,14 @@ class MainScreen(Screen[None]):
 
 
 HELP = """Navegación
-  1-7          Ir a una sección (Inicio, Proyectos, Nuevo juego, Skills, Herramientas, Integraciones, Configuración)
+  1-8          Ir a una sección (Inicio, Proyectos, Ideas, Nuevo juego, Skills, Herramientas, Integraciones, Configuración)
   Tab          Siguiente control        Mayús+Tab   Anterior
   Ctrl+N       Nuevo juego              F5          Recargar juegos y diagnóstico
+
+Ideas
+  Explorar idea  Claude investiga sin nombre, género ni git, en work/ideas/<fecha>, y escribe IDEA.md
+  Enter          Abrir la idea seleccionada en Claude Code       F   Abrir su carpeta
+  Convertir      Crea el juego basado en la idea: su investigación va a docs/research/
   Ctrl+P       Paleta de comandos       Ctrl+Q      Salir
 
 Proyectos

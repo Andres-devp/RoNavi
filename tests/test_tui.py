@@ -11,7 +11,7 @@ except ImportError:  # the core tests still run without the venv
 from tests.helpers import StudioTestCase
 
 if textual:
-    from textual.widgets import Checkbox, ContentSwitcher, Input
+    from textual.widgets import Checkbox, ContentSwitcher, Input, Select
 
     from ronavi.ui import mascot
     from ronavi.ui.app import RoNaviApp
@@ -43,8 +43,8 @@ class TuiTests(StudioTestCase, unittest.IsolatedAsyncioTestCase):
             await pilot.press("enter")
             self.assertIsInstance(app.screen, MainScreen)
             switcher = app.screen.query_one("#content", ContentSwitcher)
-            for key, section in zip("1234567", ["home", "projects", "new", "skills", "tools", "integrations",
-                                                 "settings"]):
+            for key, section in zip("12345678", ["home", "projects", "ideas", "new", "skills", "tools",
+                                                  "integrations", "settings"]):
                 app.screen.query_one("#nav").focus()
                 await pilot.press(key)
                 await pilot.pause()
@@ -98,6 +98,43 @@ class TuiTests(StudioTestCase, unittest.IsolatedAsyncioTestCase):
             self.assertTrue((self.root / "games" / "LavaRun" / ".claude" / "hooks" / "ronavi_guard.py").exists())
             self.assertIn("LavaRun", [g.slug for g in app.games])
             self.assertEqual(app.screen.query_one("#content", ContentSwitcher).current, "projects")
+            await app.workers.wait_for_complete()
+
+    async def test_explore_an_idea_then_build_a_game_on_it(self):
+        app = self.make_app()
+        async with app.run_test(size=(150, 48)) as pilot:
+            await pilot.press("enter")
+            app.screen.query_one("#home-idea").press()
+            await pilot.pause()
+            switcher = app.screen.query_one("#content", ContentSwitcher)
+            self.assertEqual(switcher.current, "ideas")
+            self.assertTrue(app.screen.query_one("#id-hint", Input).has_focus)
+            app.screen.query_one("#id-launch", Checkbox).value = False  # never launch Claude in tests
+            await pilot.press(*"zombies", "enter")
+            await pilot.pause(0.3)
+            self.assertEqual(len(app.ideas), 1)
+            idea = app.ideas[0]
+            self.assertEqual(idea.hint, "zombies")
+            (idea.root / "IDEA.md").write_text("# Zombie Farm\n", encoding="utf-8")
+            app.reload_games()
+            await pilot.pause()
+
+            await pilot.click("#id-convert")
+            await pilot.pause()
+            self.assertEqual(switcher.current, "new")
+            self.assertEqual(app.screen.query_one("#ng-idea", Select).value, idea.id)
+            self.assertEqual(app.screen.query_one("#ng-name", Input).value, "Zombie Farm")  # from IDEA.md
+            app.screen.query_one("#ng-open", Checkbox).value = False
+            await pilot.click("#ng-create")
+            await self.wait_for(pilot, lambda: isinstance(app.screen, TaskScreen))
+            await self.wait_for(pilot, lambda: app.screen.done, timeout=60)
+            self.assertTrue(app.screen.ok)
+            await pilot.press("escape")
+            await pilot.pause()
+            game = self.root / "games" / "ZombieFarm"
+            self.assertTrue((game / "docs" / "research" / "IDEA.md").is_file())
+            self.assertEqual(app.screen.query_one("#ng-idea", Select).value, "")
+            self.assertEqual(app.ideas[0].converted_to, "ZombieFarm")
             await app.workers.wait_for_complete()
 
     async def test_invalid_name_is_rejected_in_the_form(self):

@@ -15,8 +15,10 @@ from textual.theme import Theme
 
 from ronavi import APP_NAME, __version__
 from ronavi.core import environment as envmod
+from ronavi.core import updates
 from ronavi.core.environment import EnvCheck
 from ronavi.core.guard import GuardError
+from ronavi.core.ideas import Idea, discover_ideas, idea_env, prepare_idea_launch
 from ronavi.core.launcher import claude_command, claude_executable, open_window, prepare_game_launch, run_here
 from ronavi.core.paths import Studio
 from ronavi.core.projects import Game, discover, launch_env
@@ -66,6 +68,7 @@ class RoNaviApp(App[None]):
         self.checks: list[EnvCheck] = []
         self.checks_loading = False
         self.games: list[Game] = []
+        self.ideas: list[Idea] = []
 
     # ------------------------------------------------------------------ lifecycle
 
@@ -84,11 +87,13 @@ class RoNaviApp(App[None]):
             self.push_screen(WelcomeScreen())
         if self.run_checks:
             self.call_after_refresh(self.refresh_env)
+            self._check_update()
 
     # ------------------------------------------------------------------ state
 
     def reload_games(self) -> None:
         self.games = discover(self.studio)
+        self.ideas = discover_ideas(self.studio)
         self._broadcast(GamesChanged())
 
     def _broadcast(self, message: Message) -> None:
@@ -118,6 +123,17 @@ class RoNaviApp(App[None]):
             checks = [EnvCheck("RoNavi", "doctor.py", envmod.FAIL, f"no se pudo ejecutar: {exc}",
                                "python scripts/doctor.py", True)]
         self.call_from_thread(self._set_checks, checks)
+
+    @work(thread=True, exclusive=True, group="update")
+    def _check_update(self) -> None:
+        """At most once a day; offline or slow just means no notice."""
+        try:
+            newer = updates.check_for_update(self.studio)
+        except Exception:
+            return
+        if newer:
+            self.call_from_thread(self.notify, f"Hay una versión nueva: RoNavi {newer}. "
+                                  "Configuración → Actualizar RoNavi.", title="Actualización", timeout=12)
 
     def _set_checks(self, checks: list[EnvCheck]) -> None:
         self.checks = checks
@@ -188,6 +204,28 @@ class RoNaviApp(App[None]):
                 self.notify(str(exc), severity="error")
         else:
             self.run_interactive(cmd, game.root, env=env, title=f"Claude Code en {game.name}", pause=False)
+            self.reload_games()
+
+    def open_idea(self, idea: Idea, *, prompt: str | None = None, mode: str | None = None) -> None:
+        """Open Claude Code in an idea folder (research only), after refreshing its guard."""
+        try:
+            prepare_idea_launch(self.studio, idea)
+        except (GuardError, OSError) as exc:
+            self.notify(str(exc), title="No se abrió Claude Code", severity="error", timeout=10)
+            return
+        cmd = self.claude_cmd(prompt)
+        if not cmd:
+            return
+        env = idea_env(self.studio, idea)
+        mode = mode or self.studio.config.launch_mode
+        if mode == "window":
+            try:
+                open_window(cmd, idea.root, f"RoNavi · idea {idea.id}", env)
+                self.notify(f"Claude Code se abrió en otra ventana, en la idea {idea.id}.", title="Listo")
+            except (GuardError, OSError) as exc:
+                self.notify(str(exc), severity="error")
+        else:
+            self.run_interactive(cmd, idea.root, env=env, title=f"Claude Code en la idea {idea.id}", pause=False)
             self.reload_games()
 
     def open_claude_in_studio(self, prompt: str | None, title: str) -> None:

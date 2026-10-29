@@ -53,6 +53,19 @@ Screen {
     min-width: 12;
 }
 
+.inline-row {
+    height: auto;
+}
+
+.inline-row Input, .inline-row Select {
+    width: 1fr;
+}
+
+.inline-row Button {
+    margin-left: 1;
+    min-width: 10;
+}
+
 Button.small {
     min-width: 10;
 }
