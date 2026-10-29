@@ -6,6 +6,7 @@ import ctypes
 import json
 import os
 import platform
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -142,6 +143,18 @@ def path_contains(directory: Path) -> bool:
     parts = [p.strip().rstrip("\\/") for p in (value or "").split(os.pathsep) if p.strip()]
     target = os.path.normcase(str(directory).rstrip("\\/"))
     return any(os.path.normcase(os.path.expandvars(p)) == target for p in parts)
+
+
+def ronavi_on_path(studio: Studio) -> bool:
+    """Would a new terminal find this studio's `ronavi`?"""
+    if SYSTEM == "Windows":
+        return path_contains(studio.root)
+    launcher = (studio.root / "ronavi.sh").resolve()
+    hit = shutil.which("ronavi")
+    if hit and Path(hit).resolve() == launcher:
+        return True
+    link = Path.home() / ".local" / "bin" / "ronavi"
+    return link.is_symlink() and link.resolve() == launcher
 
 
 def add_to_user_path(directory: Path) -> str:

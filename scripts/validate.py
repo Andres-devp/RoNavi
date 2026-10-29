@@ -21,7 +21,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 SKIP_DIRS = {".git", "vendor", "games", "work", "node_modules", "__pycache__", ".venv", ".ronavi"}
 OWN_SKILLS = ["studio-doctor", "quota-guard", "own-audio"]
-SHELL_SCRIPTS = ["scripts/setup.sh", "scripts/update-skills.sh", "ronavi.sh"]
+SHELL_SCRIPTS = ["scripts/setup.sh", "scripts/update-skills.sh", "ronavi.sh", "install.sh"]
 
 
 def tracked(pattern: str) -> list[Path]:
@@ -71,14 +71,14 @@ def check_powershell(strict: bool) -> list[str]:
         print("pwsh parse  not installed" + (" (FAIL)" if strict else " (skipped)"))
         return ["pwsh not installed"] if strict else []
     script = (
-        "$bad = 0; Get-ChildItem -Recurse -Filter *.ps1 -Path scripts | ForEach-Object { "
+        "$bad = 0; @(Get-ChildItem -Recurse -Filter *.ps1 -Path scripts) + @(Get-Item install.ps1) | ForEach-Object { "
         "$t = $null; $e = $null; "
         "[void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$t, [ref]$e); "
         "foreach ($x in $e) { Write-Output \"$($_.Name):$($x.Extent.StartLineNumber): $($x.Message)\"; $bad++ } }; "
         "exit $bad")
     res = subprocess.run([exe, "-NoProfile", "-NonInteractive", "-Command", script], cwd=REPO,
                          capture_output=True, text=True)
-    print(f"pwsh parse  scripts/*.ps1 with {Path(exe).name}")
+    print(f"pwsh parse  scripts/*.ps1 and install.ps1 with {Path(exe).name}")
     return [res.stdout + res.stderr] if res.returncode else []
 
 

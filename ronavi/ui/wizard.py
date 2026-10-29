@@ -202,6 +202,12 @@ class WizardScreen(Screen[None]):
                 self._compute_status()
             app.confirm("Carpeta de juegos", f"Se definirá ROBLOX_GAMES_HOME = {studio.games_home} "
                         "para tu usuario (las terminales nuevas la verán).", set_home)  # type: ignore[attr-defined]
+        elif step.key == "path":
+            def add_path() -> None:
+                app.notify(integrations.add_to_user_path(studio.root), title="PATH")  # type: ignore[attr-defined]
+                self._compute_status()
+            app.confirm(step.title, f"{step.why}\n\nAbre una terminal nueva y escribe ronavi.",  # type: ignore[attr-defined]
+                        add_path)
 
     def action_finish(self) -> None:
         app = self.app

@@ -173,6 +173,11 @@ def setup_steps(studio: Studio, optional_programs: bool = False) -> list[SetupSt
         "gameshome", "Carpeta de juegos", f"ROBLOX_GAMES_HOME = {studio.games_home} para tu usuario "
         "(las skills la usan para encontrar los juegos).", "action"))
     steps.append(SetupStep(
+        "path", "'ronavi' en cualquier terminal",
+        f"Añade {studio.root} al PATH de tu usuario, para escribir ronavi desde cualquier carpeta."
+        if SYSTEM == "Windows" else "Crea el enlace ~/.local/bin/ronavi hacia el lanzador del estudio.",
+        "action"))
+    steps.append(SetupStep(
         "studio", "Roblox Studio y servicios", "Pasos que solo puedes hacer tú.", "manual", manual=[
             "Studio: inicia sesión; Assistant → … → Manage MCP Servers → Enable Studio as MCP server.",
             "Studio: deja Script Sync APAGADO (usamos Rojo).",
@@ -199,6 +204,9 @@ def step_done(step: SetupStep, studio: Studio, checks: list[EnvCheck]) -> bool |
     if step.key == "gameshome":
         value = user_env("ROBLOX_GAMES_HOME")
         return bool(value) and Path(os.path.expandvars(value)).expanduser().resolve() == studio.games_home
+    if step.key == "path":
+        from ronavi.core.integrations import ronavi_on_path  # integrations imports this module
+        return ronavi_on_path(studio)
     if step.key == "studio":
         return "studio" in studio.config.manual_done
     return None
