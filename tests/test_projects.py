@@ -1,11 +1,12 @@
 import json
 import unittest
 
+from ronavi.core import lsp
 from ronavi.core import templates as T
 from ronavi.core.guard import GuardError
-from ronavi.core.projects import (GUARD_CONFIG_REL, GUARD_REL, adopt_game, create_game, discover, find_game,
-                                  load_game, local_settings, posix_rule_path, protected_deny_rules,
-                                  sync_all_guards)
+from ronavi.core.projects import (GUARD_CONFIG_REL, GUARD_REL, LUAU_CHECK_REL, adopt_game, create_game, discover,
+                                  find_game, load_game, local_settings, posix_rule_path, protected_deny_rules,
+                                  refreshed_mcp, sync_all_guards)
 from tests.helpers import StudioTestCase, git
 
 MANAGED_GUARD_FILES = (".claude/settings.local.json", GUARD_CONFIG_REL)
@@ -154,6 +155,62 @@ class GuardRulesTests(StudioTestCase):
         first = (a.root / ".claude/settings.local.json").read_text(encoding="utf-8")
         self.assertEqual(sync_all_guards(self.studio), [])
         self.assertEqual((a.root / ".claude/settings.local.json").read_text(encoding="utf-8"), first)
+        self.assertEqual(git("status", "--porcelain", cwd=a.root).stdout.strip(), "")
+
+
+class PostEditAndPluginTests(StudioTestCase):
+    def test_games_get_the_luau_check_hook_and_the_lsp_plugin(self):
+        game = create_game(self.studio, "Alpha")
+        self.assertTrue((game.root / LUAU_CHECK_REL).is_file())
+        local = json.loads((game.root / ".claude/settings.local.json").read_text(encoding="utf-8"))
+        post = local["hooks"]["PostToolUse"]
+        self.assertEqual(len(post), 1)
+        self.assertIn("Edit", post[0]["matcher"])
+        self.assertTrue(post[0]["hooks"][0]["args"][0].endswith("ronavi_luau_check.py"))
+        self.assertTrue(local["enabledPlugins"][lsp.PLUGIN_ID])
+        source = local["extraKnownMarketplaces"][lsp.MARKETPLACE]["source"]
+        self.assertEqual((source["source"], source["path"]), ("directory", str(lsp.plugins_root(self.studio))))
+        self.assertTrue((lsp.plugins_root(self.studio) / lsp.PLUGIN / ".lsp.json").is_file())
+
+    def test_user_hooks_and_a_disabled_plugin_survive_a_sync(self):
+        game = create_game(self.studio, "Alpha")
+        user = {"hooks": {"PostToolUse": [{"matcher": "Write", "hooks": [{"type": "command", "command": "mine.sh"}]}]},
+                "enabledPlugins": {lsp.PLUGIN_ID: False}}
+        data = local_settings(self.studio, game.root, local_settings(self.studio, game.root, user))
+        commands = [h["command"] for e in data["hooks"]["PostToolUse"] for h in e["hooks"]]
+        self.assertIn("mine.sh", commands)
+        self.assertEqual(sum("ronavi_luau_check.py" in " ".join(h.get("args", []))
+                             for e in data["hooks"]["PostToolUse"] for h in e["hooks"]), 1)
+        self.assertFalse(data["enabledPlugins"][lsp.PLUGIN_ID])
+
+    def test_sync_brings_new_studio_rules_and_pins_to_old_games(self):
+        game = create_game(self.studio, "Alpha")
+        settings_path, mcp_path = game.root / ".claude/settings.json", game.root / ".mcp.json"
+        old = json.loads(settings_path.read_text(encoding="utf-8"))
+        old["permissions"]["deny"] = ["Read(.env*)", "Bash(my-own-rule)"]
+        settings_path.write_text(json.dumps(old), encoding="utf-8")
+        mcp = json.loads(mcp_path.read_text(encoding="utf-8"))
+        args = mcp["mcpServers"]["robloxstudio-runtime"]["args"]
+        args[args.index(next(a for a in args if a.startswith("@chrrxs/")))] = "@chrrxs/robloxstudio-mcp@3.0.0"
+        mcp_path.write_text(json.dumps(mcp), encoding="utf-8")
+
+        sync_all_guards(self.studio)
+        deny = json.loads(settings_path.read_text(encoding="utf-8"))["permissions"]["deny"]
+        self.assertIn("Bash(my-own-rule)", deny)  # the game's own rule stays
+        self.assertIn("mcp__robloxstudio-runtime__set_script_source", deny)
+        studio_args = json.loads((self.root / ".mcp.json").read_text(encoding="utf-8"))[
+            "mcpServers"]["robloxstudio-runtime"]["args"]
+        game_args = json.loads(mcp_path.read_text(encoding="utf-8"))["mcpServers"]["robloxstudio-runtime"]["args"]
+        self.assertEqual(game_args, studio_args)
+
+    def test_refreshed_mcp_only_touches_pinned_packages(self):
+        studio = {"mcpServers": {"rt": {"args": ["/c", "npx", "-y", "@chrrxs/robloxstudio-mcp@9.9.9"]}}}
+        game = {"mcpServers": {"rt": {"args": ["/c", "npx", "-y", "@chrrxs/robloxstudio-mcp@1.0.0", "--mine"]},
+                               "other": {"command": "x", "args": ["@chrrxs/robloxstudio-mcp@1.0.0"]}}}
+        out = refreshed_mcp(studio, game)
+        self.assertEqual(out["mcpServers"]["rt"]["args"], ["/c", "npx", "-y", "@chrrxs/robloxstudio-mcp@9.9.9", "--mine"])
+        self.assertEqual(out["mcpServers"]["other"]["args"], ["@chrrxs/robloxstudio-mcp@1.0.0"])  # not in the studio
+        self.assertEqual(game["mcpServers"]["rt"]["args"][3], "@chrrxs/robloxstudio-mcp@1.0.0")  # input untouched
 
 
 if __name__ == "__main__":

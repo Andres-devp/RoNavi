@@ -35,7 +35,12 @@
     "deny": [
       "Read(.env*)",
       "Read(**/kaggle.json)",
-      "Read(~/.kaggle/**)"
+      "Read(~/.kaggle/**)",
+      "mcp__robloxstudio-runtime__set_script_source",
+      "mcp__robloxstudio-runtime__edit_script_lines",
+      "mcp__robloxstudio-runtime__insert_script_lines",
+      "mcp__robloxstudio-runtime__delete_script_lines",
+      "mcp__robloxstudio-runtime__find_and_replace_in_scripts"
     ],
     "ask": [
       "mcp__Roblox_Studio__execute_luau",
@@ -44,7 +49,17 @@
       "mcp__Roblox_Studio__insert_asset",
       "mcp__Roblox_Studio__generate_*",
       "mcp__Roblox_Studio__upload_image",
-      "mcp__Roblox_Studio__store_image"
+      "mcp__Roblox_Studio__store_image",
+      "mcp__Roblox_Studio__segment_mesh",
+      "mcp__Roblox_Studio__auto_setup_avatar",
+      "mcp__Roblox_Studio__create_skill",
+      "mcp__Roblox_Studio__edit_skill",
+      "mcp__robloxstudio-runtime__manage_experience",
+      "mcp__robloxstudio-runtime__manage_monetization",
+      "mcp__robloxstudio-runtime__upload_asset",
+      "mcp__robloxstudio-runtime__insert_asset",
+      "mcp__robloxstudio-runtime__generate_model",
+      "mcp__robloxstudio-runtime__import_rbxm"
     ]
   },
   "enabledMcpjsonServers": [

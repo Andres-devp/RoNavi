@@ -9,9 +9,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from ronavi.core import lsp
 from ronavi.core.guard import GuardError, assert_git_isolated, is_within, same_path
 from ronavi.core.paths import Studio
-from ronavi.core.projects import Game, launch_env, sync_guard
+from ronavi.core.projects import Game, hook_python, launch_env, sync_guard
 from ronavi.core.templates import sanitize_prompt
 
 SYSTEM = platform.system()
@@ -47,8 +48,8 @@ def claude_command(studio: Studio, prompt: str | None = None, extra: list[str] |
     return cmd
 
 
-def prepare_game_launch(studio: Studio, game: Game) -> None:
-    """Checks that run before Claude Code opens in a game."""
+def prepare_game_launch(studio: Studio, game: Game) -> list[str]:
+    """Checks that run before Claude Code opens in a game. Returns warnings that do not stop the launch."""
     if not is_within(game.root, studio.games_home) or not same_path(game.root.parent, studio.games_home):
         raise GuardError(f"{game.root} no está en la carpeta de juegos.")
     if not game.managed:
@@ -56,6 +57,8 @@ def prepare_game_launch(studio: Studio, game: Game) -> None:
     if game.has_git:
         assert_git_isolated(game.root)
     sync_guard(studio, game)
+    problem = lsp.ensure_installed(studio, game.root, claude_executable(), hook_python())
+    return [problem] if problem else []  # Claude Code still opens; it only lacks diagnostics
 
 
 def run_here(cmd: list[str], cwd: Path, env: dict[str, str] | None = None) -> int:

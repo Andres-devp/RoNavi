@@ -18,17 +18,24 @@ from pathlib import Path
 from typing import Callable
 
 from ronavi import __version__
+from ronavi.core import lsp, toolchain
 from ronavi.core import templates as T
 from ronavi.core.guard import GameScope, GuardError, assert_git_isolated, is_within, real, validate_name
 from ronavi.core.paths import GAME_META_DIR, Studio, read_json
 
 Progress = Callable[[str], None]
 
-GUARD_ASSET = Path(__file__).resolve().parent.parent / "assets" / "ronavi_guard.py"
+ASSETS = Path(__file__).resolve().parent.parent / "assets"
+GUARD_ASSET = ASSETS / "ronavi_guard.py"
 GUARD_REL = ".claude/hooks/ronavi_guard.py"
 GUARD_CONFIG_REL = ".claude/ronavi-guard.json"
 HOOK_MATCHER = "Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell"
+LUAU_CHECK_ASSET = ASSETS / "ronavi_luau_check.py"
+LUAU_CHECK_REL = ".claude/hooks/ronavi_luau_check.py"
+LUAU_CHECK_MATCHER = "Write|Edit|MultiEdit"
 OPTIONAL_MCP_SERVERS = ["blender-ahujasid", "robloxstudio-runtime"]
+# npm packages the studio pins in .mcp.json; a sync moves each game to the studio's version.
+PINNED_MCP_PACKAGES = ("@chrrxs/robloxstudio-mcp@",)
 # Studio-only allow rules that make no sense inside a game.
 STUDIO_ONLY_RULE_MARKERS = ("scripts/doctor.py",)
 GAME_MARKERS = ("default.project.json", ".git", "HANDOFF.md", "aftman.toml", "rokit.toml")
@@ -213,9 +220,17 @@ def _is_managed_deny(rule: str, studio: Studio) -> bool:
     return any(body == r or body.startswith(r + "/") for r in roots)
 
 
-def _is_guard_hook(entry: dict) -> bool:
-    return any("ronavi_guard.py" in " ".join([str(h.get("command", "")), *map(str, h.get("args", []))])
+def _runs_script(entry: dict, script: str) -> bool:
+    return any(script in " ".join([str(h.get("command", "")), *map(str, h.get("args", []))])
                for h in entry.get("hooks", []))
+
+
+def _is_guard_hook(entry: dict) -> bool:
+    return _runs_script(entry, "ronavi_guard.py")
+
+
+def _is_luau_check_hook(entry: dict) -> bool:
+    return _runs_script(entry, "ronavi_luau_check.py")
 
 
 def hook_python() -> str:
@@ -225,7 +240,7 @@ def hook_python() -> str:
 
 
 def local_settings(studio: Studio, game_root: Path, existing: dict | None) -> dict:
-    """The game's .claude/settings.local.json (untracked): guard hook + absolute deny rules."""
+    """The game's .claude/settings.local.json (untracked): guard hook, post-edit check, absolute deny rules."""
     data = json.loads(json.dumps(existing or {}))
     perms = data.setdefault("permissions", {})
     deny = [r for r in perms.get("deny", []) if not _is_managed_deny(r, studio)]
@@ -238,11 +253,28 @@ def local_settings(studio: Studio, game_root: Path, existing: dict | None) -> di
         "hooks": [{
             "type": "command",
             "command": hook_python(),
-            "args": [str(real(game_root) / ".claude" / "hooks" / "ronavi_guard.py")],
+            "args": [str(real(game_root) / GUARD_REL)],
             "timeout": 15,
         }],
     })
     hooks["PreToolUse"] = pre
+    post = [e for e in hooks.get("PostToolUse", []) if not _is_luau_check_hook(e)]
+    post.insert(0, {
+        "matcher": LUAU_CHECK_MATCHER,
+        "hooks": [{
+            "type": "command",
+            "command": hook_python(),
+            "args": [str(real(game_root) / LUAU_CHECK_REL)],
+            "timeout": 75,  # StyLua + Selene, 30 s each at most
+        }],
+    })
+    hooks["PostToolUse"] = post
+
+    # luau-lsp for Claude (the ronavi-luau plugin); the marketplace path is this machine's (D20).
+    markets, plugins = lsp.settings_entries(studio)
+    data.setdefault("extraKnownMarketplaces", {}).update(markets)
+    for plugin_id, enabled in plugins.items():
+        data.setdefault("enabledPlugins", {}).setdefault(plugin_id, enabled)  # the user may have turned it off
 
     # Optional MCP servers start off, like the studio's own settings.local.json (D9).
     enabled = data.get("enabledMcpjsonServers", [])
@@ -285,16 +317,54 @@ def _read_obj(path: Path) -> dict:
 
 
 def install_guard(studio: Studio, scope: GameScope, allowed: list[Path] | None = None) -> None:
-    """Hook, its config and the deny rules, inside `scope` only. Shared by games and ideas."""
+    """Hooks, the guard's config and the deny rules, inside `scope` only. Shared by games and ideas."""
     scope.copy_file(GUARD_ASSET, GUARD_REL)
+    scope.copy_file(LUAU_CHECK_ASSET, LUAU_CHECK_REL)
+    lsp.write_plugin(studio, hook_python())  # the studio's own .ronavi/, never the template's tracked files
     _write_json(scope, GUARD_CONFIG_REL, guard_config(studio, scope.root, allowed))
     local_path = scope.check(".claude/settings.local.json")
     _write_json(scope, ".claude/settings.local.json", local_settings(studio, scope.root, _read_obj(local_path)))
 
 
+def refreshed_mcp(studio_mcp: dict, game_mcp: dict) -> dict:
+    """The game's .mcp.json with the studio's versions of PINNED_MCP_PACKAGES; nothing else changes."""
+    data = json.loads(json.dumps(game_mcp))
+    studio_servers = studio_mcp.get("mcpServers", {})
+    for name, server in data.get("mcpServers", {}).items():
+        studio_args = studio_servers.get(name, {}).get("args", [])
+        args = server.get("args")
+        if not isinstance(args, list):
+            continue
+        for i, arg in enumerate(args):
+            for prefix in PINNED_MCP_PACKAGES:
+                if isinstance(arg, str) and arg.startswith(prefix):
+                    args[i] = next((a for a in studio_args if isinstance(a, str) and a.startswith(prefix)), arg)
+    return data
+
+
+def refresh_studio_files(studio: Studio, scope: GameScope, progress: Progress = _noop) -> None:
+    """Bring the studio's new permission rules and MCP pins to a game, writing only what changed."""
+    settings_path = scope.check(".claude/settings.json")
+    if settings_path.exists():
+        current = _read_obj(settings_path)
+        merged = game_settings(studio, current)
+        if merged != current:
+            _write_json(scope, ".claude/settings.json", merged)
+            progress("· .claude/settings.json: reglas nuevas del estudio")
+    mcp_path = scope.check(".mcp.json")
+    if mcp_path.exists():
+        current = _read_obj(mcp_path)
+        pinned = refreshed_mcp(_read_obj(studio.root / ".mcp.json"), current)
+        if pinned != current:
+            _write_json(scope, ".mcp.json", pinned)
+            progress("· .mcp.json: versiones fijadas del estudio")
+
+
 def sync_guard(studio: Studio, game: Game, progress: Progress = _noop) -> None:
     """Install or refresh the guard of one game. Touches only files inside that game."""
-    install_guard(studio, scope_for(studio, game.root))
+    scope = scope_for(studio, game.root)
+    install_guard(studio, scope)
+    refresh_studio_files(studio, scope, progress)
     progress(f"guardián al día en {game.slug}")
 
 
@@ -419,6 +489,8 @@ def create_game(studio: Studio, name: str, genre: str = "other", description: st
             if res.returncode != 0:
                 progress("! new_project.py falló; se continúa sin código")
             scope.check(root)  # the generator must not have written anywhere else
+            if res.returncode == 0:
+                toolchain.upgrade_toolchain(root, progress)  # newer tools proven with the scaffold (D21)
     root.mkdir(exist_ok=True)
 
     meta = {
