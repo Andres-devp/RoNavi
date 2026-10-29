@@ -10,6 +10,7 @@
     ronavi ideas                 ideas guardadas
     ronavi sync-guards           reinstala el guardián de todos los juegos
     ronavi update [--check]      pasa a la última versión (tag) o hace pull de tu rama
+    ronavi update --all          además skills, plugins, guardianes y toolchain de cada juego
     ronavi path [add]            ¿se puede escribir "ronavi" en cualquier terminal? add lo arregla
     ronavi paths                 rutas que usa RoNavi
 """
@@ -126,6 +127,12 @@ def cmd_ideas(_: argparse.Namespace) -> int:
 def cmd_update(a: argparse.Namespace) -> int:
     from ronavi.core.updates import UpdateError, check_for_update, update
     studio = _studio()
+    if a.all:
+        from ronavi.core.launcher import run_here
+        from ronavi.core.update_all import FAIL, summary, update_all
+        results = update_all(studio, lambda cmd, cwd: run_here(cmd, cwd), progress=print)
+        print("\nResumen:\n" + summary(results))
+        return 1 if any(r.status == FAIL for r in results) else 0
     try:
         if a.check:
             newer = check_for_update(studio, force=True)
@@ -207,7 +214,10 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(fn=cmd_idea)
     sub.add_parser("ideas", help="lista las ideas guardadas").set_defaults(fn=cmd_ideas)
     p = sub.add_parser("update", help="actualiza RoNavi Studio (git)")
-    p.add_argument("--check", action="store_true", help="solo comprueba si hay una versión nueva")
+    which = p.add_mutually_exclusive_group()
+    which.add_argument("--check", action="store_true", help="solo comprueba si hay una versión nueva")
+    which.add_argument("--all", action="store_true",
+                       help="RoNavi, skills, plugins, guardianes y toolchain de cada juego (sigue aunque uno falle)")
     p.set_defaults(fn=cmd_update)
     p = sub.add_parser("path", help="'ronavi' en cualquier terminal")
     p.add_argument("action", nargs="?", choices=["add"])

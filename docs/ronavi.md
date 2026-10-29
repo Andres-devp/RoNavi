@@ -37,7 +37,7 @@ Después arranca en un par de segundos.
 | 5 | Skills | Inventario de `skills.lock.json`; instalar/sincronizar, buscar actualizaciones, `/roblox-skills-setup` |
 | 6 | Herramientas | Diagnóstico completo (`scripts/doctor.py`); instalar programas con winget; dependencias de Python |
 | 7 | Integraciones | Servidores MCP (estudio o cada juego), claves como variables de entorno, Figma, cupos |
-| 8 | Configuración | Carpeta de juegos, modo de apertura de Claude, animaciones, PATH, asistente, **Actualizar RoNavi** |
+| 8 | Configuración | Carpeta de juegos, modo de apertura de Claude, animaciones, PATH, asistente, **Actualizar todo** y **Actualizar RoNavi** |
 
 Otras teclas: `Ctrl+N` nuevo juego, `F5` recargar, `?` ayuda, `Ctrl+P` paleta, `Ctrl+Q` salir.
 
@@ -143,6 +143,7 @@ ronavi ideas                                  ideas guardadas
 ronavi sync-guards                            reinstala el guardián de todos los juegos
 ronavi doctor [--json]                        lo mismo que python scripts/doctor.py
 ronavi update [--check]                       pasa a la última versión (o git pull en tu rama)
+ronavi update --all                           actualiza todo (ver Versiones y actualizaciones)
 ronavi path [add]                             ¿"ronavi" funciona en cualquier terminal? add lo arregla
 ronavi paths                                  rutas que usa RoNavi
 ronavi --version                              versión y commit de git
@@ -158,6 +159,19 @@ El estudio clonado **es** la instalación; no hay paquete aparte (D18). Cada ver
   Una instalación pasa al tag más nuevo; un clon de desarrollo (en una rama, como `main`) hace
   `git pull --ff-only`. Si el estudio tiene cambios sin guardar en archivos de git, no se toca nada.
   Tus juegos (`games/`), ideas (`work/`) y configuración (`.ronavi/`) están fuera de git y no cambian.
+- **Actualizar todo:** `ronavi update --all` o *Configuración → Actualizar todo*. En orden:
+  1. **RoNavi**, como arriba.
+  2. **Skills de terceros** (`scripts/update-skills`): en la terminal, te pregunta antes de mover cada
+     commit fijado.
+  3. **Plugins de Claude Code**: `claude plugin marketplace update` y `claude plugin update` de
+     `roblox-skills@roblox-skills` y `figma@claude-plugins-official`. El tag fijado de EL4CTEO no se
+     mueve; si tu marketplace no está en ese tag, se avisa (*Skills → Instalar / sincronizar* lo arregla).
+  4. **Guardianes**: el de cada juego, con sus hooks y reglas nuevos.
+  5. **Toolchain de cada juego**: sube las versiones fijadas y ejecuta `rokit install` en los juegos con
+     `aftman.toml` o `rokit.toml`.
+
+  Si un paso falla, sigue con el siguiente; al final hay un resumen ✔/✘ por paso (… si quedó pendiente).
+  La CLI termina con código 1 si algún paso falló.
 - **Aviso:** al arrancar, como mucho una vez al día, RoNavi mira los tags de `origin` (3 s como máximo,
   en silencio si no hay red) y avisa si hay una versión más nueva que la tuya.
 - **Publicar una versión** (mantenedores):

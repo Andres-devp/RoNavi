@@ -16,7 +16,7 @@ if textual:
     from ronavi.ui import mascot
     from ronavi.ui.app import RoNaviApp
     from ronavi.ui.main import MainScreen
-    from ronavi.ui.modals import TaskScreen
+    from ronavi.ui.modals import TaskScreen, TextScreen
     from ronavi.ui.welcome import WelcomeScreen
     from ronavi.ui.wizard import WizardScreen
 
@@ -179,6 +179,36 @@ class TuiTests(StudioTestCase, unittest.IsolatedAsyncioTestCase):
             await pilot.pause(0.3)
             self.assertEqual(launched, [])
             await app.workers.wait_for_complete()
+
+    async def test_update_all_runs_every_step_and_shows_a_summary(self):
+        from contextlib import ExitStack
+
+        from tests.test_update_all import FakeProcs
+        fake = FakeProcs()
+        app = self.make_app()
+        app.run_interactive = lambda cmd, cwd, **kw: fake.terminal(cmd, cwd)  # the skills step, in the terminal
+        with ExitStack() as stack:
+            fake.patch(stack)
+            async with app.run_test(size=(150, 48)) as pilot:
+                await pilot.press("enter")
+                app.screen.show_section("settings")
+                await pilot.pause()
+                app.screen.query_one("#st-update-all").press()
+                await pilot.pause()
+                await pilot.press("y")  # confirm
+                for _ in range(2):  # RoNavi, then (after the skills step) plugins, guards and toolchain
+                    await self.wait_for(pilot, lambda: isinstance(app.screen, TaskScreen) and app.screen.done)
+                    await pilot.press("escape")
+                    await pilot.pause()
+                await self.wait_for(pilot, lambda: isinstance(app.screen, TextScreen))
+                text = app.screen.text
+                self.assertIn("✘ RoNavi", text)  # no origin in the test studio
+                self.assertIn("✔ Skills de terceros", text)
+                self.assertIn("✔ Plugins de Claude Code", text)
+                self.assertIn("✔ Guardianes de los juegos", text)
+                self.assertIn("… Toolchain de los juegos", text)
+                self.assertEqual(len(fake.interactive), 1)
+                await app.workers.wait_for_complete()
 
     async def test_small_terminal_renders(self):
         app = self.make_app()

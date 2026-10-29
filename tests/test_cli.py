@@ -56,6 +56,27 @@ class CliTests(StudioTestCase):
         self.assertNotIn("decoy", out)
         self.assertIn(__version__, out)
 
+    def test_update_all_reports_every_step(self):
+        from contextlib import ExitStack
+        from unittest import mock
+
+        from tests.test_update_all import FakeProcs
+        fake = FakeProcs()
+        with ExitStack() as stack:
+            fake.patch(stack)
+            stack.enter_context(mock.patch("ronavi.core.launcher.run_here", fake.terminal))
+            code, out, _ = self.run_cli("update", "--all")
+        self.assertEqual(code, 1)  # the test studio has no origin: RoNavi ✘, the rest still ran
+        summary = out.split("Resumen:", 1)[1]
+        self.assertIn("✘ RoNavi", summary)
+        self.assertIn("✔ Skills de terceros", summary)
+        self.assertIn("✔ Plugins de Claude Code", summary)
+        self.assertIn("✔ Guardianes de los juegos", summary)
+        self.assertIn("… Toolchain de los juegos", summary)
+        self.assertEqual(len(fake.interactive), 1)
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            main(["update", "--all", "--check"])
+
     def test_version(self):
         code, out, _ = self.run_cli("--version")
         self.assertEqual(code, 0)

@@ -17,7 +17,7 @@ from textual.widgets.option_list import Option
 
 from ronavi import __version__
 from ronavi.core import environment as envmod
-from ronavi.core import integrations, skills, updates
+from ronavi.core import integrations, skills, update_all, updates
 from ronavi.core import templates as T
 from ronavi.core.guard import GuardError, is_within, same_path, validate_name
 from ronavi.core.ideas import Idea, create_idea
@@ -629,11 +629,7 @@ class SkillsSection(Section):
                         "cambió), copia las skills de proyecto e instala los plugins. No mueve ningún commit fijado.",
                         lambda: app.run_task("Skills", jobs, lambda ok: self.ronavi_refresh(None)))
         elif bid == "sk-update":
-            if envmod.SYSTEM == "Windows":
-                cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                       str(studio.root / "scripts" / "update-skills.ps1")]
-            else:
-                cmd = ["bash", str(studio.root / "scripts" / "update-skills.sh")]
+            cmd = update_all.skills_command(studio)
             app.confirm("Buscar actualizaciones",
                         "Muestra qué cambió en cada fuente y te pregunta en la terminal antes de mover cada commit "
                         "fijado. Si cambia algo, reinstala.",
@@ -844,6 +840,12 @@ class SettingsSection(Section):
                 yield Button("Asistente de instalación", id="st-wizard")
                 yield Button("Añadir 'ronavi' al PATH", id="st-path")
                 yield Button("Revisar guardianes", id="st-guards")
+        yield Label("Actualizaciones", classes="subtitle")
+        with Vertical(classes="card"):
+            yield Static("Actualizar todo: RoNavi, skills, plugins, guardianes y toolchain de cada juego. "
+                         "También desde la terminal: ronavi update --all", classes="muted")
+            with Horizontal(classes="button-row"):
+                yield Button("⟳ Actualizar todo", id="st-update-all", variant="primary")
                 yield Button("Actualizar RoNavi", id="st-update")
         yield Label("Acerca de", classes="subtitle")
         yield Static("", id="st-about", classes="card")
@@ -888,14 +890,46 @@ class SettingsSection(Section):
             app.confirm("Actualizar RoNavi",
                         "Descarga la última versión del estudio con git. Tus juegos, ideas y configuración no se "
                         "tocan. Si el estudio tiene cambios sin guardar, no se actualiza.", run_update)
+        elif bid == "st-update-all":
+            app.confirm("Actualizar todo",
+                        "En orden: RoNavi (git), skills de terceros (en la terminal: te pregunta antes de mover cada "
+                        "commit fijado), plugins de Claude Code (sin mover el tag fijado de EL4CTEO), el guardián de "
+                        "cada juego y la toolchain de cada juego (rokit install). Si un paso falla, sigue con el "
+                        "siguiente y al final ves un resumen.", self.update_everything)
         elif bid == "st-guards":
             app.run_task("Guardianes", [Job("Sincronizar el guardián de todos los juegos",
                                             func=lambda log: [log("! " + p) for p in sync_all_guards(studio, log)])])
 
+    def update_everything(self) -> None:
+        """Background steps run in a TaskScreen; the interactive one (skills) gets the terminal in between."""
+        app = self.rapp
+        pending = update_all.steps(app.studio, lambda cmd, cwd: app.run_interactive(
+            cmd, cwd, title="Actualizar todo · skills de terceros"))
+        results: list[update_all.StepResult] = []
+
+        def record(step: update_all.Step, log) -> None:
+            results.append(update_all.run_step(step, log))
+
+        def advance(_ok: bool = True) -> None:
+            while pending and pending[0].interactive:
+                record(pending.pop(0), lambda _line: None)
+            if not pending:
+                app.refresh_env()
+                self.ronavi_refresh(None)
+                app.push_screen(TextScreen("Actualizar todo", update_all.summary(results)))
+                return
+            batch = []
+            while pending and not pending[0].interactive:
+                batch.append(pending.pop(0))
+            app.run_task("Actualizar todo", [Job(s.title, func=lambda log, s=s: record(s, log)) for s in batch],
+                         advance)
+
+        advance()
+
     def save(self) -> None:
         app = self.rapp
         studio = app.studio
-        raw = self.query_one("#st-home", Input).value.strip()
+        raw =self.query_one("#st-home", Input).value.strip()
         home = Path(raw).expanduser().resolve() if raw else studio.default_games_home
         if same_path(home, studio.root) or is_within(studio.root, home):
             app.notify("La carpeta de juegos no puede ser ni contener el estudio.", severity="error")
