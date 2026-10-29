@@ -5,15 +5,26 @@ instalación inicial, creación de juegos, skills, herramientas, integraciones y
 Su mascota es **Navi**, un zorro con bufanda roja.
 
 ```powershell
-.\ronavi          # Windows (cmd o PowerShell), desde la raíz del estudio
+irm https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.ps1 | iex   # instalar (Windows)
 ```
 ```bash
-sh ronavi.sh      # macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.sh | sh   # macOS / Linux
 ```
 
+Después, en cualquier terminal y carpeta:
+
+```bash
+ronavi
+```
+
+El instalador clona el estudio en `RONAVI_HOME` (por defecto `~/RoNavi`) en la última versión
+publicada y pone `ronavi` en el PATH de tu usuario (en macOS/Linux, el enlace `~/.local/bin/ronavi`).
+Si clonaste a mano, `.\ronavi` (o `sh ronavi.sh`) desde la raíz del estudio funciona igual, y
+`ronavi path add` (o el paso del asistente, o *Configuración → Añadir 'ronavi' al PATH*) lo deja
+disponible en todas partes.
+
 La primera vez, el lanzador crea `.venv/` en el estudio e instala Textual ahí (nunca en tu Python).
-Después arranca en un par de segundos. Desde *Configuración → Añadir 'ronavi' al PATH* puedes
-escribir `ronavi` en cualquier terminal.
+Después arranca en un par de segundos.
 
 ## Secciones
 
@@ -21,11 +32,12 @@ escribir `ronavi` en cualquier terminal.
 |---|---|---|
 | 1 | Inicio | Estado del entorno, juegos recientes, **Continuar** el último juego |
 | 2 | Proyectos | Lista de juegos; **Enter** abre Claude Code en el juego. Carpeta, VS Code, `rokit install`, `wally install`, `check.py`, `rojo serve`, adoptar carpetas, reinstalar el guardián |
-| 3 | Nuevo juego | Nombre, género, idea; git propio, commit inicial, código con `roblox-code` y abrir Claude con la etapa 1 |
-| 4 | Skills | Inventario de `skills.lock.json`; instalar/sincronizar, buscar actualizaciones, `/roblox-skills-setup` |
-| 5 | Herramientas | Diagnóstico completo (`scripts/doctor.py`); instalar programas con winget; dependencias de Python |
-| 6 | Integraciones | Servidores MCP (estudio o cada juego), claves como variables de entorno, Figma, cupos |
-| 7 | Configuración | Carpeta de juegos, modo de apertura de Claude, animaciones, PATH, asistente |
+| 3 | Ideas | **Explorar idea** sin nombre ni género; lista de ideas, abrirlas en Claude y **Convertir en juego** |
+| 4 | Nuevo juego | Nombre, género, idea, *basado en una idea*; git propio, commit inicial, código con `roblox-code` y abrir Claude con la etapa 1 |
+| 5 | Skills | Inventario de `skills.lock.json`; instalar/sincronizar, buscar actualizaciones, `/roblox-skills-setup` |
+| 6 | Herramientas | Diagnóstico completo (`scripts/doctor.py`); instalar programas con winget; dependencias de Python |
+| 7 | Integraciones | Servidores MCP (estudio o cada juego), claves como variables de entorno, Figma, cupos |
+| 8 | Configuración | Carpeta de juegos, modo de apertura de Claude, animaciones, PATH, asistente, **Actualizar RoNavi** |
 
 Otras teclas: `Ctrl+N` nuevo juego, `F5` recargar, `?` ayuda, `Ctrl+P` paleta, `Ctrl+Q` salir.
 
@@ -41,10 +53,27 @@ Detecta qué falta y lo arregla reutilizando los scripts del estudio. Lo que ya 
 | Skills y plugins | Automático, con registro en vivo | `scripts/skills_sync.py vendor · user · project · plugins · local-settings` |
 | Dependencias de Python | Automático | `pip install --user -r requirements.txt` |
 | Carpeta de juegos | Un clic (pide confirmación) | `ROBLOX_GAMES_HOME` de usuario |
+| `ronavi` en cualquier terminal | Un clic (pide confirmación) | PATH de usuario (Windows) o `~/.local/bin/ronavi` |
 | Roblox Studio y servicios | Manual: lo marcas como hecho | Interruptor del MCP, Script Sync apagado, Figma, `LOCAL.md` |
 
 Los pasos manuales son solo los indispensables: iniciar sesión, autorizar Figma y los interruptores
 de Studio. En macOS/Linux los programas se instalan con tu gestor de paquetes; RoNavi los comprueba.
+
+## Ideas: investigar antes de tener juego
+
+¿Quieres investigar sin decidir nombre, género ni descripción? **Ideas → Explorar idea** (también
+desde Inicio, o `ronavi idea`). El campo «¿Qué tienes en mente?» es opcional.
+
+1. RoNavi crea `work/ideas/<fecha>/` (p. ej. `work/ideas/2026-10-29-1530/`): sin git, sin Rojo y fuera
+   del git del estudio, con un `CLAUDE.md` que le dice a Claude que solo investigue.
+2. Abre Claude Code ahí con un prompt de investigación de mercado: tres conceptos (nombre provisional,
+   género, bucle, público, por qué puede funcionar, riesgo) en `IDEA.md`, con fuentes.
+3. La idea tiene su propio guardián, más estricto que el de un juego: Claude solo escribe dentro de esa
+   idea (y en el registro de cupos). No puede crear `games/<Juego>/` ni tocar otras ideas.
+4. Cuando elijas un concepto: **Convertir en juego** (o *Nuevo juego → Basado en una idea*). RoNavi
+   propone el título de `IDEA.md` como nombre, crea el juego como siempre y copia la investigación a
+   `docs/research/`. El primer prompt le dice a Claude que planifique sobre ella en vez de repetirla.
+   La idea se conserva, marcada con el juego que salió de ella.
 
 ## Cada juego es independiente
 
@@ -68,7 +97,8 @@ trabajo. `--add-dir` hace visibles las skills del estudio (`.claude/skills/`) y 
 Claude Code no buscaría skills más arriba. Antes de abrir, RoNavi vuelve a comprobar el git del juego
 y reinstala su guardián.
 
-Variables que recibe Claude: `ROBLOX_GAMES_HOME` (la carpeta de juegos), `RONAVI_STUDIO` y `RONAVI_GAME`.
+Variables que recibe Claude: `ROBLOX_GAMES_HOME` (la carpeta de juegos), `RONAVI_STUDIO` y `RONAVI_GAME`
+(`RONAVI_IDEA` en una idea).
 
 ## Protecciones
 
@@ -105,12 +135,36 @@ Sin argumentos abre la TUI. Los subcomandos sirven para scripts y pruebas:
 
 ```text
 ronavi list                                   juegos y estado del guardián
-ronavi new "Coin Dash" --genre obby --desc "…" [--no-git] [--no-commit] [--code]
+ronavi new "Coin Dash" --genre obby --desc "…" [--no-git] [--no-commit] [--code] [--from-idea ID]
 ronavi open CoinDash [--window] [--prompt "…"]
+ronavi idea [--hint "…"] [--no-open] [--window]  explora una idea sin nombre ni género
+ronavi idea 2026-10-29-1530                   reabre una idea en Claude Code
+ronavi ideas                                  ideas guardadas
 ronavi sync-guards                            reinstala el guardián de todos los juegos
 ronavi doctor [--json]                        lo mismo que python scripts/doctor.py
+ronavi update [--check]                       pasa a la última versión (o git pull en tu rama)
+ronavi path [add]                             ¿"ronavi" funciona en cualquier terminal? add lo arregla
 ronavi paths                                  rutas que usa RoNavi
+ronavi --version                              versión y commit de git
 ```
+
+## Versiones y actualizaciones
+
+El estudio clonado **es** la instalación; no hay paquete aparte (D18). Cada versión es un tag de git
+`vX.Y.Z` con su [GitHub Release](https://github.com/Andres-devp/roblox-ai-studio/releases) y sus notas en
+[CHANGELOG.md](../CHANGELOG.md).
+
+- **Actualizar:** `ronavi update`, *Configuración → Actualizar RoNavi* o volver a ejecutar el instalador.
+  Una instalación pasa al tag más nuevo; un clon de desarrollo (en una rama, como `main`) hace
+  `git pull --ff-only`. Si el estudio tiene cambios sin guardar en archivos de git, no se toca nada.
+  Tus juegos (`games/`), ideas (`work/`) y configuración (`.ronavi/`) están fuera de git y no cambian.
+- **Aviso:** al arrancar, como mucho una vez al día, RoNavi mira los tags de `origin` (3 s como máximo,
+  en silencio si no hay red) y avisa si hay una versión más nueva que la tuya.
+- **Publicar una versión** (mantenedores):
+  1. Sube `__version__` en `ronavi/__init__.py` y añade su sección `## [X.Y.Z] - fecha` en `CHANGELOG.md`.
+  2. Commit, y luego `git tag vX.Y.Z` y `git push origin vX.Y.Z`.
+  3. El workflow `release` comprueba que el tag coincide con `__version__`, pasa las mismas revisiones
+     que la CI y crea la GitHub Release con las notas del CHANGELOG (`scripts/release_notes.py`).
 
 ## Código y pruebas
 
@@ -118,10 +172,10 @@ ronavi paths                                  rutas que usa RoNavi
 ronavi/
   bootstrap.py        venv + dependencias (solo biblioteca estándar)
   cli.py              subcomandos
-  core/               lógica sin interfaz: paths, guard, projects, environment, integrations, skills, launcher
+  core/               lógica sin interfaz: paths, guard, projects, ideas, updates, environment, integrations, skills, launcher
   assets/ronavi_guard.py   el hook que se copia a cada juego
   ui/                 Textual: app, welcome, wizard, main (secciones), modals, mascot, styles.tcss
-tests/                unittest: guard, proyectos y aislamiento, hook, integraciones, TUI (pilot de Textual)
+tests/                unittest: guard, proyectos y aislamiento, ideas, actualizaciones, hook, integraciones, TUI (pilot de Textual)
 ```
 
 ```powershell
@@ -137,7 +191,9 @@ escrituras en un juego hermano y que una *junction* dentro de un juego no sirve 
 
 | Síntoma | Arreglo |
 |---|---|
-| `ronavi` no se reconoce | Ejecuta `.\ronavi` desde la raíz del estudio o añádelo al PATH en Configuración |
+| `ronavi` no se reconoce | Abre una terminal **nueva** después de instalar. Si sigue igual: `.\ronavi path add` desde la raíz del estudio (en macOS/Linux, comprueba que `~/.local/bin` está en tu PATH) |
+| `ronavi update` dice que hay cambios sin guardar | Has editado archivos del estudio: haz commit o `git stash`, actualiza y luego `git stash pop` |
+| El instalador dice que la carpeta ya existe | Esa carpeta no es RoNavi: elige otra con `RONAVI_HOME` |
 | "No se pudo preparar el entorno de RoNavi" | Borra `.venv/` y vuelve a ejecutar; pip necesita internet la primera vez |
 | Caracteres raros o sin colores | Usa Windows Terminal (o cualquier terminal con color verdadero) y una fuente con bloques Unicode |
 | Claude dice que el guardián lo bloqueó | Es lo esperado fuera del juego: haz ese cambio tú o desde RoNavi |

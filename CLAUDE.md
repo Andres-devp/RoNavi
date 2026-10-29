@@ -8,6 +8,7 @@ Documentación para humanos en español; código, nombres de archivo e identific
 ## Mapa del repo
 
 - `games/<Juego>/`: cada juego es un proyecto Rojo independiente, con su propio git, su `CLAUDE.md`, su `.claude/` y un guardián (`.claude/hooks/ronavi_guard.py`); fuera del git de este repo. `ROBLOX_GAMES_HOME` apunta a `games/`.
+- `work/ideas/<fecha>/`: ideas de RoNavi (investigación antes de tener juego; sin git, con su propio guardián). Al convertirse en juego, su investigación pasa a `docs/research/` del juego.
 - `ronavi/`: RoNavi Studio (Python + Textual). `core/` sin interfaz (rutas, guard, proyectos, entorno, integraciones), `ui/` la TUI, `assets/ronavi_guard.py` el hook de cada juego. `tests/`: sus pruebas (`unittest`).
 - `.claude/skills/`: skills de proyecto.
   - Propias (versionadas): `studio-doctor`, `quota-guard`, `own-audio`.

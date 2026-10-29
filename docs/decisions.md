@@ -151,6 +151,18 @@ encargo original y la documentación oficial están al final, con fecha de verif
 
 **Por qué:** mantiene la regla del estudio (las claves viven solo en variables de entorno) y evita pasos manuales. El valor no se escribe en archivos, no se muestra y no pasa por Claude. RoNavi solo informa "configurada" o "falta".
 
+## D17. Ideas antes que juegos, en `work/ideas/`
+
+**Decisión:** *Explorar idea* crea `work/ideas/<fecha>/` con un `CLAUDE.md` propio, `.claude/settings.json` del estudio y el mismo guardián que un juego, pero más estrecho: Claude solo escribe dentro de esa idea y en el registro de `quota-guard` (`work/quota-ledger.json`), no en otras ideas. No hay git ni proyecto de Rojo. Al crear un juego *basado en idea*, sus notas (sin los archivos de RoNavi ni los ocultos) se copian a `docs/research/` del juego, que guarda `from_idea` en `.ronavi/project.json`. La idea no se borra.
+
+**Por qué:** investigar no debería obligar a inventar un nombre y un género. `work/` ya está fuera del git del estudio y de las reglas deny (D14), así que una idea no ensucia la plantilla ni aparece como juego en `games/`. `GameScope` acepta otra carpeta padre (`container`) y `install_guard` es el mismo para juegos e ideas: una sola implementación de las protecciones.
+
+## D18. El clon es la instalación; las versiones son tags
+
+**Decisión:** `install.ps1` / `install.sh` (una línea con `irm | iex` o `curl | sh`) clonan el estudio en `RONAVI_HOME` (por defecto `~/RoNavi`), hacen checkout del tag `vX.Y.Z` más nuevo y ponen `ronavi` en el PATH. `ronavi update` pasa al tag más nuevo, o hace `git pull --ff-only` si el estudio está en una rama, y se niega con cambios sin guardar. La versión vive en `ronavi/__init__.py`; el workflow `release` comprueba que el tag coincide, pasa las revisiones y crea la GitHub Release con las notas de `CHANGELOG.md`.
+
+**Por qué:** RoNavi depende de todo el estudio (skills, `scripts/`, `.claude/`, `docs/`), no solo de su código Python; un paquete de PyPI tendría que descargar el estudio aparte y mantener dos versiones sincronizadas. Con el clon hay una sola fuente de verdad, actualizar es git, y los juegos (`games/`) e ideas (`work/`) quedan fuera porque git los ignora.
+
 ---
 
 ## Diferencias entre el encargo y la documentación oficial

@@ -18,47 +18,56 @@ otros juegos. Guía completa: [docs/ronavi.md](docs/ronavi.md).
 
 ## Inicio rápido
 
-**1. Git y el repositorio** (PowerShell en Windows):
+**1. Instala RoNavi Studio con una línea:**
+
+```powershell
+irm https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.ps1 | iex
+```
+```bash
+curl -fsSL https://raw.githubusercontent.com/Andres-devp/roblox-ai-studio/main/install.sh | sh   # macOS / Linux
+```
+
+El instalador comprueba git y Python 3.11+ (en Windows ofrece instalarlos con winget), descarga el
+estudio en `~/RoNavi` en su **última versión**, pone `ronavi` en tu PATH y lo abre. Desde entonces
+basta con escribir `ronavi` en cualquier terminal. Para otra carpeta: `$env:RONAVI_HOME = "D:\RoNavi"`
+(o `RONAVI_HOME=…` en macOS/Linux) antes del comando. Volver a ejecutarlo actualiza.
+
+<details>
+<summary>Prefiero clonar a mano (o usé "Use this template")</summary>
 
 ```powershell
 winget install --id Git.Git -e
-```
-
-Cierra y abre la terminal, y luego:
-
-```powershell
-cd $HOME\Desktop
 git clone https://github.com/Andres-devp/roblox-ai-studio.git
 cd roblox-ai-studio
+.\ronavi                      # sh ronavi.sh en macOS / Linux
 ```
 
-(Si creaste tu copia con "Use this template", usa la URL de tu repositorio).
+Usa la URL de tu repositorio si lo creaste desde la plantilla. El asistente ofrece poner `ronavi`
+en el PATH, o hazlo con `.\ronavi path add`.
+</details>
 
-**2. Abre RoNavi Studio:**
-
-```powershell
-.\ronavi
-```
-```bash
-sh ronavi.sh        # macOS / Linux
-```
-
-Si falta Python, el lanzador ofrece instalarlo con winget. La primera vez prepara `.venv/` (unos
-segundos) y abre el **asistente de instalación**, que hace por ti, en orden:
+**2. El asistente.** La primera vez RoNavi prepara `.venv/` (unos segundos) y abre el **asistente de
+instalación**, que hace por ti, en orden:
 
 1. Programas con winget (Git, VS Code, Python, Rokit, uv, Blender 4.5, Roblox Studio, Claude Code; opcionales con una casilla).
 2. Inicio de sesión en Claude Code (se abre `claude`; sales con `/exit`).
 3. Skills y plugins fijados en `skills.lock.json`.
 4. Dependencias de Python de las skills.
 5. `ROBLOX_GAMES_HOME`.
-6. Lo que solo puedes hacer tú: el interruptor del MCP en Studio, Script Sync apagado, Figma y `LOCAL.md`.
+6. `ronavi` en cualquier terminal (PATH de tu usuario).
+7. Lo que solo puedes hacer tú: el interruptor del MCP en Studio, Script Sync apagado, Figma y `LOCAL.md`.
 
 Las claves de API se definen en **Integraciones** y se guardan como variables de entorno de tu
 usuario (sección 3).
 
-**3. Tu primer juego:** sección **Nuevo juego** (o `Ctrl+N`), escribe el nombre y el género y pulsa
+**3. Tu primer juego.** ¿Aún no sabes cuál? Sección **Ideas → Explorar idea**: sin nombre, género ni
+git, Claude investiga el mercado y te propone tres conceptos en `IDEA.md`. Cuando elijas uno,
+**Convertir en juego**. ¿Ya lo tienes claro? **Nuevo juego** (o `Ctrl+N`): nombre, género y
 **Crear juego**. RoNavi crea la carpeta con su git y abre Claude Code ahí con la etapa 1
 (investigación y plan). Para seguir otro día: **Proyectos → Enter**, o **Continuar** en Inicio.
+
+**Actualizar:** `ronavi update` o *Configuración → Actualizar RoNavi*. RoNavi avisa al arrancar cuando
+hay una versión nueva ([CHANGELOG](CHANGELOG.md)).
 
 Los scripts de siempre siguen funcionando sin la TUI (`scripts\setup.ps1`, `scripts\install-prereqs.ps1`,
 `python scripts/doctor.py`): RoNavi los reutiliza.
@@ -237,7 +246,7 @@ export KAGGLE_API_TOKEN="tu-token"
 
 ## 5. Tu primer juego
 
-En RoNavi: **Nuevo juego** crea la carpeta y abre Claude con la etapa 1; **Proyectos → Enter** continúa. Si prefieres hacerlo a mano, abre `claude` dentro de la carpeta del juego con `--add-dir` hacia el estudio (es lo que hace RoNavi).
+En RoNavi: **Ideas → Explorar idea** investiga antes de tener nombre o género (sin crear el juego); **Nuevo juego** crea la carpeta, opcionalmente *basado en una idea*, y abre Claude con la etapa 1; **Proyectos → Enter** continúa. Si prefieres hacerlo a mano, abre `claude` dentro de la carpeta del juego con `--add-dir` hacia el estudio (es lo que hace RoNavi).
 
 Prompts exactos que activan `create-roblox-game`, cada uno en una sesión:
 
