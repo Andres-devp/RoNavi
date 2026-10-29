@@ -9,7 +9,7 @@ from pathlib import Path
 
 from ronavi.core.paths import Studio
 
-OWN_SKILLS = ["studio-doctor", "quota-guard", "own-audio"]
+OWN_SKILLS = ["studio-doctor", "quota-guard", "own-audio", "own-images", "cloud-test"]
 SYPHODEV_FALLBACK = [
     "create-roblox-game", "roblox-3d-model", "roblox-animation", "roblox-build-orchestrator", "roblox-code",
     "roblox-map", "roblox-sfx", "roblox-skills-setup", "roblox-texture-gen", "roblox-ui", "roblox-vfx"]

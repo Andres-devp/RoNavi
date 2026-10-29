@@ -11,7 +11,7 @@ Documentación para humanos en español; código, nombres de archivo e identific
 - `work/ideas/<fecha>/`: ideas de RoNavi (investigación antes de tener juego; sin git, con su propio guardián). Al convertirse en juego, su investigación pasa a `docs/research/` del juego.
 - `ronavi/`: RoNavi Studio (Python + Textual). `core/` sin interfaz (rutas, guard, proyectos, entorno, integraciones), `ui/` la TUI, `assets/ronavi_guard.py` el hook de cada juego. `tests/`: sus pruebas (`unittest`).
 - `.claude/skills/`: skills de proyecto.
-  - Propias (versionadas): `studio-doctor`, `quota-guard`, `own-audio`.
+  - Propias (versionadas): `studio-doctor`, `quota-guard`, `own-audio`, `own-images`, `cloud-test`.
   - De terceros (las copia el setup): `figma-to-roblox-ui`, `roblox-game-design`, `roblox-player-psychology`.
 - `~/.claude/skills` y `~/.claude/agents`: skills y agentes de SyphoDev, a nivel usuario.
 - Plugins: `roblox-skills@roblox-skills` (EL4CTEO, conocimiento) y `figma@claude-plugins-official`.
@@ -32,9 +32,11 @@ Documentación para humanos en español; código, nombres de archivo e identific
 | VFX | `roblox-vfx` |
 | Sonidos de la Creator Store | `roblox-sfx` |
 | Mis propios sonidos y música (WAV de mi DAW) | `own-audio` |
+| Mis propias imágenes, iconos o arte de UI (PNG/SVG) | `own-images` (Asphalt) |
+| Specs en un servidor real de Roblox, sin Studio (después de `check.py`) | `cloud-test` |
 | Diseño, bucles de juego, retención | `roblox-game-design`, `roblox-player-psychology` |
 | Manejar Studio por MCP | `roblox-skills:roblox-studio-mcp` |
-| **Antes** de usar cualquier servicio con cupo (Cloudflare, Kaggle, Figma, Open Cloud, procedurales de Studio, ZeroGPU) | `quota-guard` |
+| **Antes** de usar cualquier servicio con cupo (Cloudflare, Kaggle, Figma, Open Cloud, Luau Execution, procedurales de Studio, ZeroGPU) | `quota-guard` |
 | Algo de MCP, Rojo o las skills falla, o máquina nueva | `studio-doctor` |
 | Varias fases de assets en paralelo | `roblox-build-orchestrator` |
 
@@ -84,6 +86,7 @@ python .claude/skills/quota-guard/scripts/quota.py status # cupos
 
 Las claves viven **solo** en variables de entorno: `ROBLOX_API_KEY`, `ROBLOX_USER_ID` / `ROBLOX_GROUP_ID`,
 `CF_ACCOUNT_ID`, `CF_API_TOKEN`, `KAGGLE_API_TOKEN` (o `~/.kaggle/kaggle.json`), `HF_TOKEN`.
+`cloud-test` usa además `ROBLOX_TEST_UNIVERSE_ID` / `ROBLOX_TEST_PLACE_ID`: un place **solo de pruebas**, nunca el publicado.
 
 - En archivos, `LOCAL.md` o documentación se escribe solo el **nombre** de la variable.
 - Nunca pidas un valor en el chat: explica cómo ponerlo con `setx` (Windows) o `export` (macOS/Linux) en la terminal del usuario.

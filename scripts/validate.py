@@ -20,7 +20,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SKIP_DIRS = {".git", "vendor", "games", "work", "node_modules", "__pycache__", ".venv", ".ronavi"}
-OWN_SKILLS = ["studio-doctor", "quota-guard", "own-audio"]
+OWN_SKILLS = ["studio-doctor", "quota-guard", "own-audio", "own-images", "cloud-test"]
 SHELL_SCRIPTS = ["scripts/setup.sh", "scripts/update-skills.sh", "ronavi.sh", "install.sh"]
 
 

@@ -57,7 +57,9 @@ subagentes no llaman a `quota.py log`, así un lote paralelo no cuenta dos veces
 | `generate_procedural_model` de Studio | `studio-procedural` | `procedural-model` |
 | `generate_mesh` / `generate_material` de Studio | `studio-generate-mesh` | solo registro, sin límite publicado |
 | Subida de audio por Open Cloud (`own-audio`) | `opencloud-audio` | `audio-upload` |
-| Subida de imagen o malla por Open Cloud | `opencloud-assets` | solo registro |
+| Subida de imagen o malla por Open Cloud (`own-images` con Asphalt) | `opencloud-assets` | `image-upload`, solo registro |
+| Guardar una versión del place de pruebas (`cloud-test`) | `opencloud-place-publish` | `place-publish`, solo registro |
+| Tarea de Luau Execution (`cloud-test`) | `opencloud-luau-exec` | `luau-exec-task` (5 por minuto) |
 
 Reglas de reinicio, tal como están en `docs/quotas.md`: Cloudflare diario a las 00:00
 UTC; Kaggle semanal (se lleva como ventana móvil de 7 días porque Kaggle solo muestra

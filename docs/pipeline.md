@@ -23,6 +23,8 @@ flowchart LR
 | VFX | `roblox-vfx` (librería de packs propios) | `docs/licenses.md` |
 | Animación | `roblox-animation` (Blender sin ventana) | — |
 | Sonido | `roblox-sfx` (Creator Store) · `own-audio` (propio) | `quota-guard` |
+| Imágenes propias (iconos, decals, UI) | `own-images` (Asphalt) | `quota-guard` |
+| Specs en un servidor de Roblox | `cloud-test` (Luau Execution, place de pruebas) | `check.py` antes, `quota-guard` |
 | Ensamblar en Studio | `create-roblox-game` + MCP `Roblox_Studio` | `roblox-skills:roblox-studio-mcp` |
 | Playtest y publicar | `create-roblox-game` (secciones 5 y 6) | `studio-doctor` si algo falla |
 

@@ -284,7 +284,7 @@ def check_skills() -> None:
     add(g, "Skills de proyecto (terceros)", not gone, ", ".join(Path(p).name for p in project) if not gone
         else "faltan: " + ", ".join(gone), setup_hint, True)
 
-    own = ["studio-doctor", "quota-guard", "own-audio"]
+    own = ["studio-doctor", "quota-guard", "own-audio", "own-images", "cloud-test"]
     gone = [n for n in own if not (ss.REPO / ".claude" / "skills" / n / "SKILL.md").exists()]
     add(g, "Skills propias", not gone, ", ".join(own) if not gone else "faltan: " + ", ".join(gone),
         "Restaura .claude/skills/ desde git", True)

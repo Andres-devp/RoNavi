@@ -26,6 +26,8 @@ Reglas para editar las tablas máquina:
 | `studio-generate-mesh` | Studio `generate_mesh` / `generate_material` | - | calls | none | Límite por minuto no publicado | 2026-10-11 |
 | `opencloud-audio` | Open Cloud: subida de audio (con ID verificado) | 100 | uploads | rolling-30d | [Usage: Assets](https://create.roblox.com/docs/cloud/guides/usage-assets) (cifra conservadora, ver nota) | 2026-10-11 |
 | `opencloud-assets` | Open Cloud: imágenes, mallas y modelos | - | uploads | none | Sin cupo mensual publicado | 2026-10-11 |
+| `opencloud-place-publish` | Open Cloud: guardar una versión de un place | - | versions | none | [Place publishing](https://create.roblox.com/docs/cloud/guides/usage-place-publishing): sin límite publicado | 2026-10-29 |
+| `opencloud-luau-exec` | Open Cloud: crear tareas de Luau Execution | 5 | tasks | rolling-60s | [Luau Execution](https://create.roblox.com/docs/cloud/reference/features/luau-execution): 5 creaciones por minuto por dueño de la clave | 2026-10-29 |
 | `pollinations` | Pollinations (respaldo de imágenes) | - | images | none | Sin cupo publicado; usar con moderación | 2026-10-11 |
 | `claude-pro` | Claude Pro (chat + Claude Code) | - | messages | none | claude.ai → Ajustes → Uso; límites compartidos entre chat y Claude Code que se reinician cada pocas horas | 2026-10-11 |
 | `gemini-cli` | Gemini CLI / Antigravity CLI (respaldo) | - | requests | none | [Gemini CLI quotas](https://geminicli.com/docs/resources/quota-and-pricing/) — reemplazado por Antigravity CLI el 2026-06-18, cifra no verificada | 2026-10-11 |
@@ -42,6 +44,9 @@ Reglas para editar las tablas máquina:
 | `figma-call` | figma-mcp | 1 | Una llamada de herramienta | 2026-10-11 |
 | `procedural-model` | studio-procedural | 1 | Un modelo | 2026-10-11 |
 | `audio-upload` | opencloud-audio | 1 | Una subida | 2026-10-11 |
+| `image-upload` | opencloud-assets | 1 | Una imagen subida con Asphalt (`own-images`) | 2026-10-29 |
+| `place-publish` | opencloud-place-publish | 1 | Una versión del place de pruebas (`cloud-test`) | 2026-10-29 |
+| `luau-exec-task` | opencloud-luau-exec | 1 | Una tarea que corre las specs (`cloud-test`) | 2026-10-29 |
 
 ## Resumen humano
 
@@ -54,6 +59,8 @@ Reglas para editar las tablas máquina:
 | Studio procedurales | 50 en 24 h móviles | Ventana móvil | Esperar; usar piezas propias |
 | Studio `generate_mesh` | Límite por minuto no publicado | — | Esperar un minuto y reintentar |
 | Open Cloud audio | Ver nota: 100/mes (guía de Open Cloud) o 2.000 cada 30 días (página de audio) | 30 días | Esperar; usar sonidos de la Creator Store con `roblox-sfx` |
+| Open Cloud imágenes (`own-images`) | Sin cupo mensual publicado | — | Solo se registra; Asphalt no resube lo que no cambió |
+| Open Cloud Luau Execution (`cloud-test`) | 5 tareas por minuto; 10 sin terminar por place; 5 min por tarea | Ventana de 60 s | Esperar un minuto; mientras, `lune run test` en local |
 | Claude Pro | Compartido entre chat y Claude Code | Cada pocas horas | Esperar; Antigravity CLI como respaldo (no verificado) |
 
 ### Notas de verificación

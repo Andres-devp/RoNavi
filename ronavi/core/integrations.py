@@ -33,9 +33,12 @@ class KeyInfo:
 
 
 KEYS = [
-    KeyInfo("ROBLOX_API_KEY", "Roblox Open Cloud (Assets: lectura y escritura)", True),
+    KeyInfo("ROBLOX_API_KEY", "Roblox Open Cloud (Assets; places y Luau Execution para cloud-test)", True),
     KeyInfo("ROBLOX_USER_ID", "Tu ID de usuario de Roblox (dueño de las subidas)", False),
     KeyInfo("ROBLOX_GROUP_ID", "ID de grupo (en lugar del usuario)", False, optional=True),
+    KeyInfo("ROBLOX_TEST_UNIVERSE_ID", "Universo de PRUEBAS para cloud-test (nunca el del juego publicado)", False,
+            optional=True),
+    KeyInfo("ROBLOX_TEST_PLACE_ID", "Place de PRUEBAS para cloud-test", False, optional=True),
     KeyInfo("CF_ACCOUNT_ID", "Cloudflare Account ID (Workers AI)", False),
     KeyInfo("CF_API_TOKEN", "Cloudflare API token (Workers AI)", True),
     KeyInfo("KAGGLE_API_TOKEN", "Kaggle API token (GPU imagen → 3D)", True),
