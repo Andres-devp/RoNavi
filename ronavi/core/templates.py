@@ -132,14 +132,55 @@ rojo serve         # y conecta el plugin de Rojo en Studio (una sola vez)
 """
 
 
-def first_prompt(name: str, slug: str, genre: str, description: str) -> str:
+def first_prompt(name: str, slug: str, genre: str, description: str, has_research: bool = False) -> str:
     """Initial prompt for a brand-new game. Only safe characters (it goes through a command line)."""
     genre_label = GENRE_LABELS.get(genre, genre).split(" (")[0].lower()
     about = f" Idea: {description}." if description else ""
-    text = (f"complete the research and plan stage for a {genre_label} game called {name}.{about} "
+    research = (" Research is already in docs/research/ (from an explored idea): build the plan on it "
+                "instead of redoing it.") if has_research else ""
+    text = (f"complete the research and plan stage for a {genre_label} game called {name}.{about}{research} "
             f"The current folder IS the game folder ({slug}): write everything here and do not create "
             f"another game folder.")
     return sanitize_prompt(text)
+
+
+def idea_prompt(hint: str = "") -> str:
+    """Initial prompt for an idea: research only, no game, no name or genre needed."""
+    about = f" Starting point from the user: {hint}." if hint.strip() else \
+        " The user has no concept yet: start from what is working on Roblox right now."
+    text = ("research the Roblox market and propose 3 game concepts (working name, genre, core loop, target "
+            f"players, why it can work and the main risk).{about} Use roblox-game-design and "
+            "roblox-player-psychology, and market research with sources. Write the concepts in IDEA.md and any "
+            "research notes in this folder only. Do NOT create a game folder or a Rojo project: when the user "
+            "picks a concept, RoNavi turns this idea into a game.")
+    return sanitize_prompt(text)
+
+
+def idea_claude_md(idea_id: str, hint: str) -> str:
+    start = f"\n\n> Punto de partida: {hint}" if hint.strip() else ""
+    return f"""# Idea {idea_id}
+
+Investigación de un juego de Roblox que **todavía no existe**, abierta desde **RoNavi Studio**.
+**Respóndeme siempre en español.**{start}
+
+## Tu ámbito: solo esta carpeta
+
+- Aquí no hay juego, ni git, ni proyecto de Rojo. **No los crees**: ni `games/<Juego>/`, ni
+  `default.project.json`, ni código Luau.
+- Escribe los conceptos en `IDEA.md` (el primer título `# ...` es el nombre que verá RoNavi) y las notas
+  de investigación en esta carpeta, por ejemplo `research/`, siempre con sus fuentes.
+- Un guardián (`.claude/hooks/ronavi_guard.py`) bloquea cualquier escritura fuera de esta carpeta. Si
+  te bloquea, no lo esquives: explica al usuario qué necesitas.
+- Puedes **leer** el estudio (skills, `docs/`), no editarlo. No escribas en Studio ni gastes cupo.
+
+## Qué entregar en `IDEA.md`
+
+Tres conceptos, cada uno con: nombre provisional, género, bucle principal, público, por qué puede
+funcionar (con datos y fuentes) y el mayor riesgo. Termina con tu recomendación.
+
+Cuando el usuario elija uno, RoNavi crea el juego (*Nuevo juego → Basado en idea*) y copia esta
+investigación a `docs/research/` del juego.
+"""
 
 
 def sanitize_prompt(text: str) -> str:

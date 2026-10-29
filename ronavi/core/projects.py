@@ -32,6 +32,7 @@ OPTIONAL_MCP_SERVERS = ["blender-ahujasid", "robloxstudio-runtime"]
 # Studio-only allow rules that make no sense inside a game.
 STUDIO_ONLY_RULE_MARKERS = ("scripts/doctor.py",)
 GAME_MARKERS = ("default.project.json", ".git", "HANDOFF.md", "aftman.toml", "rokit.toml")
+RESEARCH_REL = "docs/research"  # where a game keeps the research of the idea it came from
 
 
 def _noop(_: str) -> None:
@@ -252,7 +253,7 @@ def local_settings(studio: Studio, game_root: Path, existing: dict | None) -> di
     return data
 
 
-def guard_config(studio: Studio, game_root: Path) -> dict:
+def guard_config(studio: Studio, game_root: Path, allowed: list[Path] | None = None) -> dict:
     protected = [str(studio.root)]
     if not is_within(studio.games_home, studio.root):
         protected.append(str(studio.games_home))
@@ -261,7 +262,7 @@ def guard_config(studio: Studio, game_root: Path) -> dict:
         "managed_by": f"RoNavi Studio {__version__}",
         "game_root": str(real(game_root)),
         "protected": protected,
-        "allowed": [str(studio.root / "work")],
+        "allowed": [str(p) for p in (allowed if allowed is not None else [studio.root / "work"])],
     }
 
 
@@ -283,13 +284,17 @@ def _read_obj(path: Path) -> dict:
     return data
 
 
+def install_guard(studio: Studio, scope: GameScope, allowed: list[Path] | None = None) -> None:
+    """Hook, its config and the deny rules, inside `scope` only. Shared by games and ideas."""
+    scope.copy_file(GUARD_ASSET, GUARD_REL)
+    _write_json(scope, GUARD_CONFIG_REL, guard_config(studio, scope.root, allowed))
+    local_path = scope.check(".claude/settings.local.json")
+    _write_json(scope, ".claude/settings.local.json", local_settings(studio, scope.root, _read_obj(local_path)))
+
+
 def sync_guard(studio: Studio, game: Game, progress: Progress = _noop) -> None:
     """Install or refresh the guard of one game. Touches only files inside that game."""
-    scope = scope_for(studio, game.root)
-    scope.copy_file(GUARD_ASSET, GUARD_REL)
-    _write_json(scope, GUARD_CONFIG_REL, guard_config(studio, game.root))
-    local_path = scope.check(".claude/settings.local.json")
-    _write_json(scope, ".claude/settings.local.json", local_settings(studio, game.root, _read_obj(local_path)))
+    install_guard(studio, scope_for(studio, game.root))
     progress(f"guardián al día en {game.slug}")
 
 
@@ -382,11 +387,14 @@ def system_python() -> str:
 
 def create_game(studio: Studio, name: str, genre: str = "other", description: str = "", *,
                 init_git: bool = True, commit: bool = True, scaffold: bool = False,
-                progress: Progress = _noop) -> Game:
+                from_idea: Path | None = None, progress: Progress = _noop) -> Game:
+    from ronavi.core import ideas  # ideas imports this module
+
     display, slug = validate_name(name)
     if genre not in T.GENRE_LABELS:
         raise GuardError(f"Género desconocido: {genre}")
     description = " ".join(description.split())[:200]
+    idea = ideas.load_idea(studio, from_idea) if from_idea is not None else None
     home = studio.games_home
     if is_within(home, studio.root) and not is_within(home, studio.default_games_home):
         progress(f"! la carpeta de juegos está dentro del estudio pero no es games/: {home}")
@@ -420,9 +428,16 @@ def create_game(studio: Studio, name: str, genre: str = "other", description: st
         "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "ronavi_version": __version__,
     }
+    if idea:
+        meta["from_idea"] = idea.id
     apply_ronavi_files(studio, scope, meta, progress)
+    if idea:
+        n = ideas.copy_research(idea, scope)
+        progress(f"· {RESEARCH_REL}/ ({n} archivo{'s' if n != 1 else ''} de la idea {idea.id})")
     game = load_game(root)
     sync_guard(studio, game, progress)
+    if idea:
+        ideas.mark_converted(studio, idea, slug)
     if init_git:
         git_init(scope, progress)
         if commit:

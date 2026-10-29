@@ -71,16 +71,19 @@ def is_within(child: Path | str, parent: Path | str) -> bool:
 
 
 class GameScope:
-    """The only door through which RoNavi writes inside a game."""
+    """The only door through which RoNavi writes inside a game (or an idea, see `container`)."""
 
-    def __init__(self, game_root: Path, studio_root: Path, games_home: Path):
+    def __init__(self, game_root: Path, studio_root: Path, games_home: Path, container: Path | None = None):
         self.root = real(game_root)
         self.studio_root = real(studio_root)
         self.games_home = real(games_home)
         if same_path(self.games_home, self.studio_root) or is_within(self.studio_root, self.games_home):
             raise GuardError(f"La carpeta de juegos ({self.games_home}) no puede ser ni contener el estudio.")
-        if not same_path(self.root.parent, self.games_home):
-            raise GuardError(f"{self.root} no está directamente dentro de la carpeta de juegos {self.games_home}.")
+        # Ideas live in <studio>/work/ideas/<id>: the same rules, another parent folder.
+        parent, label = (self.games_home, "la carpeta de juegos") if container is None else \
+            (real(container), "la carpeta de ideas")
+        if not same_path(self.root.parent, parent):
+            raise GuardError(f"{self.root} no está directamente dentro de {label} {parent}.")
         if is_within(self.studio_root, self.root):
             raise GuardError(f"{self.root} contiene el estudio: operación rechazada.")
 

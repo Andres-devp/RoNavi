@@ -65,6 +65,7 @@ class Config:
     setup_done: bool = False           # the first-run wizard was completed (or skipped) once
     last_game: str | None = None
     manual_done: list[str] = field(default_factory=list)  # manual wizard steps the user ticked
+    last_update_check: float = 0.0     # epoch seconds of the last "is there a newer RoNavi?" look
 
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
@@ -105,6 +106,11 @@ class Studio:
         value = self.config.games_home or os.environ.get("ROBLOX_GAMES_HOME")
         path = Path(os.path.expandvars(value)).expanduser() if value else self.default_games_home
         return path.resolve()
+
+    @property
+    def ideas_home(self) -> Path:
+        """Research before there is a game: work/ is git-ignored and outside every deny list."""
+        return self.root / "work" / "ideas"
 
     @property
     def is_first_run(self) -> bool:
