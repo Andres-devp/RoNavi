@@ -4,7 +4,7 @@
 2. Creates <studio>/.venv and installs ronavi/requirements.txt there, only when the
    venv is missing or the requirements changed (hash stamp). Nothing goes into the
    user's own Python.
-3. Runs `python -m ronavi <args>` with the venv's interpreter.
+3. Runs `python -P -m ronavi <args>` with the venv's interpreter, from any folder.
 """
 
 from __future__ import annotations
@@ -46,6 +46,12 @@ def ensure_venv() -> Path:
     return py
 
 
+def ronavi_command(py: Path, argv: list[str]) -> list[str]:
+    """-P: never import from the current folder. Run from inside another studio clone, a plain
+    `-m ronavi` would load THAT clone's code and act on that studio."""
+    return [str(py), "-P", "-m", "ronavi", *argv]
+
+
 def main(argv: list[str]) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -63,7 +69,7 @@ def main(argv: list[str]) -> int:
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(STUDIO), env.get("PYTHONPATH")]))
     env.setdefault("PYTHONIOENCODING", "utf-8")
     try:
-        return subprocess.call([str(py), "-m", "ronavi", *argv], env=env)
+        return subprocess.call(ronavi_command(py, argv), env=env)
     except KeyboardInterrupt:
         return 130
 

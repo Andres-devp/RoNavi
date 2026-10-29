@@ -1,9 +1,13 @@
 import contextlib
 import io
+import os
+import subprocess
+import sys
+from pathlib import Path
 
-from ronavi import __version__
+from ronavi import __version__, bootstrap
 from ronavi.cli import main
-from tests.helpers import StudioTestCase
+from tests.helpers import REPO, StudioTestCase
 
 
 class CliTests(StudioTestCase):
@@ -38,6 +42,19 @@ class CliTests(StudioTestCase):
         code, _, err = self.run_cli("new", "Other", "--from-idea", "nope")
         self.assertEqual(code, 1)
         self.assertIn("No existe la idea", err)
+
+    def test_launcher_ignores_a_ronavi_package_in_the_current_folder(self):
+        # Regression: run from inside another clone, `python -m ronavi` imported that clone's code.
+        decoy = self.tmp / "elsewhere" / "ronavi"
+        decoy.mkdir(parents=True)
+        (decoy / "__init__.py").write_text("", encoding="utf-8")
+        (decoy / "__main__.py").write_text("print('decoy')\n", encoding="utf-8")
+        cmd = bootstrap.ronavi_command(Path(sys.executable), ["--version"])
+        env = dict(os.environ, PYTHONPATH=str(REPO))
+        out = subprocess.run(cmd, cwd=decoy.parent, env=env, capture_output=True, text=True,
+                             encoding="utf-8").stdout
+        self.assertNotIn("decoy", out)
+        self.assertIn(__version__, out)
 
     def test_version(self):
         code, out, _ = self.run_cli("--version")
