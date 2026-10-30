@@ -309,13 +309,42 @@ def plugin_sources(lock: dict) -> list[dict]:
     return [s for s in lock["sources"] if s["install"]["method"] == "plugin"]
 
 
+def same_path(a: str | None, b: Path) -> bool:
+    try:
+        return bool(a) and Path(a).resolve() == b.resolve()
+    except OSError:
+        return False
+
+
+def plugin_entry(plugins: list[dict], pid: str) -> dict | None:
+    """The `claude plugin list` entry that applies to this repo.
+
+    A project-scope install is tied to the folder it was made from, so after moving or
+    renaming the repo the old entry is still listed (often with errors) next to the new one.
+    """
+    entries = [p for p in plugins if p.get("id") == pid]
+    here = [p for p in entries if p.get("scope") != "project" or same_path(p.get("projectPath"), REPO)]
+    return (here or entries or [None])[0]
+
+
+def plugin_problem(entry: dict | None) -> str | None:
+    """Why the plugin does not work here, or None when it does. Same rule as doctor.py."""
+    if not entry:
+        return "not installed"
+    if entry.get("errors"):
+        return "; ".join(entry["errors"])
+    if not entry.get("enabled", False):
+        return "disabled"
+    return None
+
+
 def el4cteo_plugin_matches(lock: dict) -> tuple[bool | None, str]:
     """Compare the installed plugin's skills with vendor/ at the pinned commit."""
     src = source(lock, "el4cteo-roblox-skills")
     plugins = claude_json("plugin", "list", "--json")
     if plugins is None:
         return None, "claude plugin list unavailable"
-    entry = next((p for p in plugins if p.get("id") == src["install"]["plugin"]), None)
+    entry = plugin_entry(plugins, src["install"]["plugin"])
     if not entry:
         return False, "not installed"
     root = Path(entry.get("readFromFolder") or entry.get("installPath") or "")
@@ -348,19 +377,31 @@ def cmd_plugins(lock: dict) -> int:
         else:
             say(f"  ok     marketplace {name}")
 
-    installed = {p["id"]: p for p in (claude_json("plugin", "list", "--json") or [])}
+    installed = claude_json("plugin", "list", "--json") or []
     for src in plugin_sources(lock):
         pid = src["install"]["plugin"]
-        if pid in installed:
-            say(f"  ok     plugin {pid} ({installed[pid].get('scope')})")
+        entry = plugin_entry(installed, pid)
+        problem = plugin_problem(entry)
+        if problem is None:
+            say(f"  ok     plugin {pid} ({entry.get('scope')})")
             continue
+        if entry:
+            say(f"  !!     plugin {pid}: {problem}")
         say(f"  install plugin {pid} --scope {src['install']['scope']}")
         run([exe, "plugin", "install", pid, "--scope", src["install"]["scope"]], cwd=REPO)
+
+    # Check again: "installed" must mean what doctor.py and the wizard will see.
+    after = claude_json("plugin", "list", "--json") or []
+    broken = [(src["install"]["plugin"], plugin_problem(plugin_entry(after, src["install"]["plugin"])))
+              for src in plugin_sources(lock)]
+    broken = [(pid, problem) for pid, problem in broken if problem]
+    for pid, problem in broken:
+        say(f"  !!     plugin {pid} still not working: {problem}")
 
     ok, detail = el4cteo_plugin_matches(lock)
     mark = {True: "ok    ", False: "!!    ", None: "??    "}[ok]
     say(f"  {mark} roblox-skills plugin content vs pinned commit: {detail}")
-    return 0
+    return 1 if broken else 0
 
 
 # --------------------------------------------------------------------------- local settings

@@ -359,6 +359,11 @@ ConfirmScreen, SecretScreen, TextScreen, TaskScreen {
     margin-top: 1;
 }
 
+/* Fixed height capped by .dialog's max-height: in a short terminal the log shrinks, never the button row. */
+.dialog.task {
+    height: 38;
+}
+
 .task-head {
     height: 7;
 }
@@ -374,7 +379,8 @@ ConfirmScreen, SecretScreen, TextScreen, TaskScreen {
 }
 
 #task-log {
-    height: 22;
+    height: 1fr;
+    min-height: 3;
     background: $background;
     border: round #3a3344;
     margin-top: 1;
