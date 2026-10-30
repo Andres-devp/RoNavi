@@ -217,6 +217,21 @@ class TuiTests(StudioTestCase, unittest.IsolatedAsyncioTestCase):
             await pilot.pause()
             self.assertIsInstance(app.screen, MainScreen)
 
+    async def test_task_close_button_fits_a_short_terminal(self):
+        # Regression: the log had a fixed height and pushed "Cerrar" out of the dialog at 120x30.
+        from ronavi.ui.modals import Job
+        app = self.make_app()
+        for size in [(120, 30), (100, 24)]:
+            async with app.run_test(size=size) as pilot:
+                await pilot.press("enter")
+                app.push_screen(TaskScreen("Skills y plugins", [Job("paso", func=lambda log: log("ok"))]))
+                await self.wait_for(pilot, lambda: isinstance(app.screen, TaskScreen) and app.screen.done)
+                await pilot.pause()
+                dialog = app.screen.query_one(".dialog").content_region
+                button = app.screen.query_one("#close").region
+                self.assertTrue(dialog.contains_region(button), (size, dialog, button))
+            app = self.make_app()
+
 
 class MascotTests(unittest.TestCase):
     @unittest.skipIf(textual is None, "needs rich")

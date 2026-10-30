@@ -309,11 +309,10 @@ def check_plugins() -> None:
     if plugins is None:
         add(g, "claude plugin list", False, "no se pudo ejecutar", "Instala Claude Code y ejecuta el setup", True)
         return
-    by_id = {p.get("id"): p for p in plugins}
     for src in ss.plugin_sources(lock):
         pid = src["install"]["plugin"]
-        p = by_id.get(pid)
-        ok = bool(p) and p.get("enabled", False) and not p.get("errors")
+        p = ss.plugin_entry(plugins, pid)
+        ok = ss.plugin_problem(p) is None
         detail = ("no instalado" if not p else "con errores: " + "; ".join(p["errors"]) if p.get("errors")
                   else f"{p.get('scope')} · {'activo' if p.get('enabled') else 'desactivado'}")
         add(g, pid, ok, detail, f"claude plugin install {pid} --scope project (o ejecuta el setup)", True)
